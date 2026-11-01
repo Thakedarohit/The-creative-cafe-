@@ -1,67 +1,83 @@
+
 <!DOCTYPE html>
 <html lang="gu">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Creative Cafe</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#101010;color:#fff;font-family:Arial,sans-serif}
-header{text-align:center;padding:35px 15px;background:#080808;border-bottom:2px solid #c9a34a}
-.logo{font-size:32px;color:#d8b45c;font-weight:bold}
-.tagline{color:#eee;margin-top:10px}
-h2{color:#d8b45c;text-align:center;margin:30px 0 15px}
-.menu{max-width:650px;margin:auto;padding:0 18px}
-.item{display:flex;justify-content:space-between;gap:12px;padding:13px 5px;border-bottom:1px solid #393939;font-size:16px}
-.price{color:#e3bd65;white-space:nowrap;font-weight:bold}
-.order{display:block;text-align:center;background:#c9a34a;color:#111;
-padding:15px;margin:30px auto;border-radius:8px;text-decoration:none;
-font-weight:bold;max-width:280px}
-footer{text-align:center;color:#aaa;padding:25px;font-size:13px}
+body{margin:0;background:#0b0b0b;color:white;font-family:Arial,sans-serif}
+header{text-align:center;padding:35px 12px;background:#050505;border-bottom:2px solid #c9a34a}
+.logo{font-size:29px;font-weight:bold;color:#e3bd65}
+header p{color:#ddd}
+h2{text-align:center;color:#e3bd65;margin:30px 0 18px}
+.menu{max-width:950px;margin:auto;padding:0 14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:#171717;border:1px solid #8c7137;border-radius:12px;overflow:hidden;text-align:center;padding-bottom:13px}
+.card img{width:100%;height:135px;object-fit:cover}
+.card h3{font-size:15px;margin:10px 3px;color:#fff}
+.price{color:#e3bd65;font-weight:bold;margin:8px}
+button{background:#c9a34a;color:#111;border:0;border-radius:6px;padding:10px 13px;font-weight:bold;cursor:pointer}
+footer{text-align:center;padding:25px;color:#aaa}
+@media(min-width:650px){.grid{grid-template-columns:repeat(3,1fr)}.card img{height:180px}}
 </style>
 </head>
 <body>
 <header>
 <div class="logo">THE CREATIVE CAFE</div>
-<div class="tagline">સુકૂનનું બીજું નામ — કોફી ☕</div>
+<p>સુકૂનનું બીજું નામ — કોફી ☕</p>
 <p>Jamnagar</p>
 </header>
+<main class="menu">
 
-<div class="menu">
 <h2>☕ HOT COFFEE</h2>
-<div class="item"><span>Espresso</span><span class="price">₹70</span></div>
-<div class="item"><span>Doppio</span><span class="price">₹90</span></div>
-<div class="item"><span>Ristretto</span><span class="price">₹70</span></div>
-<div class="item"><span>Lungo</span><span class="price">₹80</span></div>
-<div class="item"><span>Americano</span><span class="price">₹100</span></div>
-<div class="item"><span>Long Black</span><span class="price">₹100</span></div>
-<div class="item"><span>Cappuccino</span><span class="price">₹120</span></div>
-<div class="item"><span>Cafe Latte</span><span class="price">₹120</span></div>
-<div class="item"><span>Flat White</span><span class="price">₹130</span></div>
-<div class="item"><span>Cortado</span><span class="price">₹110</span></div>
-<div class="item"><span>Piccolo Latte</span><span class="price">₹110</span></div>
-<div class="item"><span>Macchiato</span><span class="price">₹90</span></div>
-<div class="item"><span>Latte Macchiato</span><span class="price">₹120</span></div>
-<div class="item"><span>Caramel Macchiato</span><span class="price">₹150</span></div>
-<div class="item"><span>Mocha</span><span class="price">₹150</span></div>
-<div class="item"><span>White Chocolate Mocha</span><span class="price">₹160</span></div>
-<div class="item"><span>Dark Chocolate Mocha</span><span class="price">₹160</span></div>
+<div class="grid" id="coffee"></div>
 
 <h2>🍹 MOJITO</h2>
-<div class="item"><span>Classic Mojito</span><span class="price">₹99</span></div>
-<div class="item"><span>Blue Lagoon</span><span class="price">₹119</span></div>
+<div class="grid" id="mojito"></div>
 
 <h2>🍫 BROWNIE</h2>
-<div class="item"><span>Chocolate Brownie</span><span class="price">₹99</span></div>
+<div class="grid" id="brownie"></div>
 
 <h2>☕ HOT CHOCOLATE</h2>
-<div class="item"><span>Classic Hot Chocolate</span><span class="price">₹120</span></div>
+<div class="grid" id="chocolate"></div>
 
-<a class="order" href="https://wa.me/919879875759?text=Hello%20The%20Creative%20Cafe%2C%20I%20want%20to%20order">
-ORDER ON WHATSAPP
-</a>
-</div>
-
+</main>
 <footer>© The Creative Cafe | Jamnagar</footer>
+<script>
+const photos=[
+"https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=600",
+"https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=600",
+"https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=600",
+"https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600",
+"https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=600"
+];
+function makeItems(id,items){
+document.getElementById(id).innerHTML=items.map((item,i)=>`
+<div class="card">
+<img src="${photos[i%photos.length]}" alt="${item[0]}">
+<h3>${item[0]}</h3>
+<div class="price">₹${item[1]}</div>
+<button onclick="order('${item[0]}',${item[1]})">ORDER NOW</button>
+</div>`).join("");
+}
+function order(name,price){
+const msg="Hello The Creative Cafe, I want to order "+name+" - Rs."+price;
+window.open("https://wa.me/919879875759?text="+encodeURIComponent(msg),"_blank");
+}
+makeItems("coffee",[
+["Espresso",70],["Doppio",90],["Ristretto",70],["Lungo",80],
+["Americano",100],["Long Black",100],["Cappuccino",120],
+["Cafe Latte",120],["Flat White",130],["Cortado",110],
+["Piccolo Latte",110],["Macchiato",90],["Latte Macchiato",120],
+["Caramel Macchiato",150],["Mocha",150],
+["White Chocolate Mocha",160],["Dark Chocolate Mocha",160]
+]);
+makeItems("mojito",[["Classic Mojito",99],["Blue Lagoon",119]]);
+makeItems("brownie",[["Chocolate Brownie",99]]);
+makeItems("chocolate",[["Classic Hot Chocolate",120]]);
+</script>
 </body>
 </html>
+
