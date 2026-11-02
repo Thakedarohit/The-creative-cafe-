@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="gu">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Creative Cafe | Admin</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#101010;color:#f7f1e5;font-family:Arial,sans-serif;padding:18px}
+    .wrap{max-width:760px;margin:auto}.card{background:#1b1b1b;border:1px solid #b89550;border-radius:14px;padding:18px;margin:14px 0}
+    h1,h2{color:#d9b66f;margin:0 0 14px}p{color:#d7d0c3;line-height:1.5}
+    label{display:block;margin:12px 0 6px;color:#e8d7b2}
+    input{width:100%;padding:12px;border-radius:8px;border:1px solid #75613c;background:#111;color:#fff;font-size:16px}
+    button{border:0;border-radius:8px;padding:11px 15px;background:#c9a45d;color:#15110a;font-weight:bold;font-size:15px;margin:10px 6px 0 0}
+    button.secondary{background:#39342a;color:#f7f1e5}button.danger{background:#8d3029;color:white}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.item{border-top:1px solid #51452f;padding:12px 0}
+    .muted{color:#aaa;font-size:13px}.hidden{display:none}.status{padding:10px;border-radius:8px;background:#29251c;margin-top:10px;white-space:pre-wrap}
+    @media(max-width:520px){.row{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>☕ The Creative Cafe</h1>
+  <p>Admin Panel — મેનૂ મેનેજમેન્ટ</p>
+
+  <section class="card" id="loginCard">
+    <h2>Admin Login</h2>
+    <label for="email">Admin Email</label><input id="email" type="email" autocomplete="username" placeholder="તમારું Firebase email">
+    <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" placeholder="તમારો પાસવર્ડ">
+    <button id="loginBtn">Login</button>
+    <div id="loginStatus" class="status">તમારા Firebase Authentication માં બનાવેલા Admin email અને password વાપરો.</div>
+  </section>
+
+  <section class="card hidden" id="adminCard">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <h2>મેનૂ ઉમેરો / બદલો</h2><button class="secondary" id="logoutBtn">Logout</button>
+    </div>
+    <form id="itemForm">
+      <input type="hidden" id="docId">
+      <label for="category">Category</label><input id="category" required placeholder="જેમ કે Hot Coffee">
+      <label for="name">Item Name</label><input id="name" required placeholder="જેમ કે Cappuccino">
+      <label for="price">Price (₹)</label><input id="price" type="number" min="0" step="0.01" required placeholder="120">
+      <label><input id="available" type="checkbox" checked style="width:auto;margin-right:8px"> Available</label>
+      <button type="submit" id="saveBtn">Save Item</button><button type="button" class="secondary" id="clearBtn">Clear</button>
+    </form>
+    <div id="adminStatus" class="status">મેનૂ લોડ થઈ રહ્યું છે…</div>
+  </section>
+
+  <section class="card hidden" id="itemsCard">
+    <h2>હાલનું મેનૂ</h2><div id="itemsList"></div>
+  </section>
+  <p class="muted">નોંધ: આ પેજનો સરનામું તમારી વેબસાઇટના અંતે /admin.html ઉમેરવાથી ખુલશે. Firestore Rules માં public read અને signed-in admin write સુરક્ષિત રીતે સેટ કરવું જરૂરી છે.</p>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAkCeioTxKKnFPVHUfRXcCQmH88SwyB9jE",
+    authDomain: "the-creativit-cafe-manu.firebaseapp.com",
+    projectId: "the-creativit-cafe-manu",
+    storageBucket: "the-creativit-cafe-manu.firebasestorage.app",
+    messagingSenderId: "806496134143",
+    appId: "1:806496134143:web:750eaea05f4565d7bb3dca",
+    measurementId: "G-M7H7506ZHE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const $ = id => document.getElementById(id);
+  const loginCard = $("loginCard"), adminCard = $("adminCard"), itemsCard = $("itemsCard");
+  const itemCollection = collection(db, "menuItems");
+
+  $("loginBtn").addEventListener("click", async () => {
+    $("loginStatus").textContent = "Login થઈ રહ્યું છે…";
+    try {
+      await signInWithEmailAndPassword(auth, $("email").value.trim(), $("password").value);
+      $("loginStatus").textContent = "Login સફળ.";
+    } catch (e) {
+      $("loginStatus").textContent = "Login થયું નથી: " + e.message;
+    }
+  });
+
+  $("logoutBtn").addEventListener("click", () => signOut(auth));
+  onAuthStateChanged(auth, user => {
+    loginCard.classList.toggle("hidden", !!user);
+    adminCard.classList.toggle("hidden", !user);
+    itemsCard.classList.toggle("hidden", !user);
+    if (user) loadItems();
+  });
+
+  function clearForm() {
+    $("itemForm").reset(); $("docId").value = ""; $("available").checked = true;
+    $("saveBtn").textContent = "Save Item";
+  }
+  $("clearBtn").addEventListener("click", clearForm);
+
+  $("itemForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const data = {
+      Category: $("category").value.trim(),
+      Name: $("name").value.trim(),
+      Price: Number($("price").value),
+      Available: $("available").checked
+    };
+    try {
+      const id = $("docId").value;
+      if (id) await updateDoc(doc(db, "menuItems", id), data);
+      else await addDoc(itemCollection, data);
+      $("adminStatus").textContent = "મેનૂ સાચવાઈ ગયું.";
+      clearForm(); await loadItems();
+    } catch (err) {
+      $("adminStatus").textContent = "સાચવી શકાયું નથી: " + err.message;
+    }
+  });
+
+  async function loadItems() {
+    $("adminStatus").textContent = "મેનૂ લોડ થઈ રહ્યું છે…";
+    $("itemsList").replaceChildren();
+    try {
+      const snap = await getDocs(itemCollection);
+      if (snap.empty) $("itemsList").textContent = "હજુ કોઈ મેનૂ આઇટમ નથી.";
+      snap.forEach(snapDoc => {
+        const d = snapDoc.data();
+        const box = document.createElement("div"); box.className = "item";
+        const title = document.createElement("strong");
+        title.textContent = (d.Name || "નામ નથી") + " — ₹" + (d.Price ?? 0);
+        const detail = document.createElement("div"); detail.className = "muted";
+        detail.textContent = (d.Category || "Category નથી") + " · " + (d.Available === false ? "Unavailable" : "Available");
+        const edit = document.createElement("button"); edit.className = "secondary"; edit.textContent = "Edit";
+        edit.addEventListener("click", () => {
+          $("docId").value = snapDoc.id; $("category").value = d.Category || "";
+          $("name").value = d.Name || ""; $("price").value = d.Price ?? "";
+          $("available").checked = d.Available !== false; $("saveBtn").textContent = "Update Item";
+          window.scrollTo({top:0,behavior:"smooth"});
+        });
+        const del = document.createElement("button"); del.className = "danger"; del.textContent = "Delete";
+        del.addEventListener("click", async () => {
+          if (!confirm("આ આઇટમ ડિલીટ કરવી છે?")) return;
+          try { await deleteDoc(doc(db, "menuItems", snapDoc.id)); await loadItems(); }
+          catch(err) { $("adminStatus").textContent = "Delete થયું નથી: " + err.message; }
+        });
+        box.append(title, detail, edit, del); $("itemsList").append(box);
+      });
+      $("adminStatus").textContent = "કુલ " + snap.size + " મેનૂ આઇટમ લોડ થઈ.";
+    } catch (err) {
+      $("adminStatus").textContent = "મેનૂ લોડ થયું નથી: " + err.message + " — Firestore Rules તપાસવાની જરૂર હોઈ શકે છે.";
+    }
+  }
+</script>
+</body>
+</html>
