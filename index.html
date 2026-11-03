@@ -1,1 +1,98 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Creative Cafe</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080808;color:#f5d27a;font-family:Arial,sans-serif}
+header{text-align:center;padding:28px 12px;border-bottom:1px solid #b58b35}
+h1{margin:0;font-size:30px;letter-spacing:2px}
+header p{color:#fff;margin:9px 0 0}
+main{max-width:650px;margin:auto;padding:18px}
+h2{color:#e8bd59;border-bottom:1px solid #806020;padding-bottom:9px}
+.item{display:flex;justify-content:space-between;gap:12px;padding:13px 4px;border-bottom:1px solid #333;color:#fff}
+.price{color:#f5d27a;white-space:nowrap}
+.order{display:block;text-align:center;background:#b58b35;color:#080808;padding:14px;margin:22px 0;text-decoration:none;font-weight:bold;border-radius:8px}
+#status{text-align:center;color:#ddd;padding:15px}
+</style>
+</head>
+<body>
+<header>
+<h1>THE CREATIVE CAFE</h1>
+<p>સુકૂન का दूसरा नाम — कॉफी।</p>
+</header>
+<main>
+<div id="menu"><p id="status">મેનૂ લોડ થઈ રહ્યું છે...</p></div>
+<a class="order" id="order" href="#" target="_blank">ORDER ON WHATSAPP</a>
+</main>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
+const firebaseConfig = {
+  authDomain: "the-creativit-cafe-manu.firebaseapp.com",
+  projectId: "the-creativit-cafe-manu",
+  storageBucket: "the-creativit-cafe-manu.firebasestorage.app",
+  messagingSenderId: "806496134143",
+  appId: "1:806496134143:web:750eaea05f4565d7bb3dca",
+  measurementId: "G-M7H7506ZHE"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const menu = document.getElementById("menu");
+
+document.getElementById("order").href =
+ "https://wa.me/919879875759?text=" +
+ encodeURIComponent("Hello The Creative Cafe, I want to place an order.");
+
+onSnapshot(collection(db,"menuItems"), (snapshot) => {
+  menu.innerHTML = "";
+  const items = snapshot.docs
+    .map(doc => doc.data())
+    .filter(item => item.Available !== false);
+
+  if (!items.length) {
+    menu.innerHTML = "<p id='status'>હાલમાં મેનૂમાં કોઈ વસ્તુ ઉપલબ્ધ નથી.</p>";
+    return;
+  }
+
+  const groups = {};
+  items.forEach(item => {
+    const category = item.Category || "Menu";
+    if (!groups[category]) groups[category] = [];
+    groups[category].push(item);
+  });
+
+  Object.keys(groups).forEach(category => {
+    const section = document.createElement("section");
+    const heading = document.createElement("h2");
+    heading.textContent = category;
+    section.appendChild(heading);
+
+    groups[category].forEach(item => {
+      const row = document.createElement("div");
+      row.className = "item";
+
+      const name = document.createElement("span");
+      name.textContent = item.Name || "";
+
+      const price = document.createElement("span");
+      price.className = "price";
+      price.textContent = "₹" + (item.Price ?? "");
+
+      row.append(name, price);
+      section.appendChild(row);
+    });
+
+    menu.appendChild(section);
+  });
+}, (error) => {
+  menu.innerHTML = "<p id='status'>મેનૂ લોડ થયું નથી. Firebase સેટિંગ તપાસો.</p>";
+  console.error(error);
+});
+</script>
+</body>
+</html>
