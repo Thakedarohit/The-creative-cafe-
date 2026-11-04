@@ -1,21 +1,29 @@
+
 <!DOCTYPE html>
 <html lang="gu">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Creative Cafe</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#080808;color:#f5d27a;font-family:Arial,sans-serif}
-header{text-align:center;padding:28px 12px;border-bottom:1px solid #b58b35}
-h1{margin:0;font-size:30px;letter-spacing:2px}
-header p{color:#fff;margin:9px 0 0}
-main{max-width:650px;margin:auto;padding:18px}
-h2{color:#e8bd59;border-bottom:1px solid #806020;padding-bottom:9px}
-.item{display:flex;justify-content:space-between;gap:12px;padding:13px 4px;border-bottom:1px solid #333;color:#fff}
-.price{color:#f5d27a;white-space:nowrap}
-.order{display:block;text-align:center;background:#b58b35;color:#080808;padding:14px;margin:22px 0;text-decoration:none;font-weight:bold;border-radius:8px}
-#status{text-align:center;color:#ddd;padding:15px}
+body{margin:0;background:#080808;color:white;font-family:Arial}
+header{text-align:center;padding:25px 10px;border-bottom:1px solid #b58b35}
+h1{color:#f5d27a;margin:0}
+header p{color:white}
+main{max-width:700px;margin:auto;padding:15px}
+h2{color:#e8bd59;border-bottom:1px solid #806020;padding-bottom:8px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 4px;border-bottom:1px solid #333}
+.price{color:#f5d27a;margin-top:5px}
+.controls{display:flex;align-items:center;gap:10px}
+button{border:0;border-radius:7px;padding:10px 14px;background:#c9a45d;color:#111;font-weight:bold}
+.panel{background:#171717;border:1px solid #806020;border-radius:12px;padding:15px;margin-top:20px}
+input{width:100%;padding:12px;background:#111;color:white;border:1px solid #806020;border-radius:7px;font-size:16px}
+label{display:block;margin:12px 0 6px;color:#e8d7b2}
+.line{display:flex;justify-content:space-between;padding:7px 0}
+.total{font-size:22px;color:#f5d27a}
+.submit{width:100%;margin-top:15px;padding:14px}
+#message{color:#f5d27a;white-space:pre-wrap}
 </style>
 </head>
 <body>
@@ -24,75 +32,211 @@ h2{color:#e8bd59;border-bottom:1px solid #806020;padding-bottom:9px}
 <p>સુકૂન का दूसरा नाम — कॉफी।</p>
 </header>
 <main>
-<div id="menu"><p id="status">મેનૂ લોડ થઈ રહ્યું છે...</p></div>
-<a class="order" id="order" href="#" target="_blank">ORDER ON WHATSAPP</a>
+<div id="menu">મેનૂ લોડ થઈ રહ્યું છે...</div>
+
+<section class="panel">
+<h2>તમારો ઓર્ડર</h2>
+<div id="cart">હજુ કોઈ વસ્તુ પસંદ કરી નથી.</div>
+<div class="line">
+<strong>કુલ બિલ</strong>
+<strong class="total" id="total">₹0</strong>
+</div>
+
+<label>ગ્રાહકનું નામ *</label>
+<input id="customerName" placeholder="તમારું નામ">
+
+<label>મોબાઇલ નંબર *</label>
+<input id="mobile" inputmode="numeric" maxlength="10"
+placeholder="10 અંકનો નંબર">
+
+<button class="submit" id="placeOrder">
+ઓર્ડર કન્ફર્મ કરો
+</button>
+<div id="message"></div>
+</section>
 </main>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import {initializeApp}
+from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+
+import {
+getFirestore,collection,onSnapshot,addDoc,serverTimestamp
+} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  authDomain: "the-creativit-cafe-manu.firebaseapp.com",
-  projectId: "the-creativit-cafe-manu",
-  storageBucket: "the-creativit-cafe-manu.firebasestorage.app",
-  messagingSenderId: "806496134143",
-  appId: "1:806496134143:web:750eaea05f4565d7bb3dca",
-  measurementId: "G-M7H7506ZHE"
+apiKey:"AIzaSyAkCeioTxKKnFPVHUfRXcCQmH88SwyB9jE",
+authDomain:"the-creativit-cafe-manu.firebaseapp.com",
+projectId:"the-creativit-cafe-manu",
+storageBucket:"the-creativit-cafe-manu.firebasestorage.app",
+messagingSenderId:"806496134143",
+appId:"1:806496134143:web:750eaea05f4565d7bb3dca",
+measurementId:"G-M7H7506ZHE"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const menu = document.getElementById("menu");
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
+const menu=document.getElementById("menu");
+const cart=document.getElementById("cart");
 
-document.getElementById("order").href =
- "https://wa.me/919879875759?text=" +
- encodeURIComponent("Hello The Creative Cafe, I want to place an order.");
+const quantities={};
+const products={};
+let busy=false;
 
-onSnapshot(collection(db,"menuItems"), (snapshot) => {
-  menu.innerHTML = "";
-  const items = snapshot.docs
-    .map(doc => doc.data())
-    .filter(item => item.Available !== false);
+function renderCart(){
+cart.innerHTML="";
+let total=0,count=0;
 
-  if (!items.length) {
-    menu.innerHTML = "<p id='status'>હાલમાં મેનૂમાં કોઈ વસ્તુ ઉપલબ્ધ નથી.</p>";
-    return;
-  }
+Object.keys(quantities).forEach(id=>{
+const q=quantities[id];
+if(q<=0 || !products[id]) return;
 
-  const groups = {};
-  items.forEach(item => {
-    const category = item.Category || "Menu";
-    if (!groups[category]) groups[category] = [];
-    groups[category].push(item);
-  });
+const p=products[id];
+const price=Number(p.Price);
+total+=price*q;
+count+=q;
 
-  Object.keys(groups).forEach(category => {
-    const section = document.createElement("section");
-    const heading = document.createElement("h2");
-    heading.textContent = category;
-    section.appendChild(heading);
-
-    groups[category].forEach(item => {
-      const row = document.createElement("div");
-      row.className = "item";
-
-      const name = document.createElement("span");
-      name.textContent = item.Name || "";
-
-      const price = document.createElement("span");
-      price.className = "price";
-      price.textContent = "₹" + (item.Price ?? "");
-
-      row.append(name, price);
-      section.appendChild(row);
-    });
-
-    menu.appendChild(section);
-  });
-}, (error) => {
-  menu.innerHTML = "<p id='status'>મેનૂ લોડ થયું નથી. Firebase સેટિંગ તપાસો.</p>";
-  console.error(error);
+const row=document.createElement("div");
+row.className="line";
+row.textContent=p.Name+" × "+q+" = ₹"+(price*q);
+cart.append(row);
 });
+
+if(count===0) cart.textContent="હજુ કોઈ વસ્તુ પસંદ કરી નથી.";
+document.getElementById("total").textContent="₹"+total;
+return {total,count};
+}
+
+function changeQty(id,change){
+quantities[id]=Math.max(0,(quantities[id]||0)+change);
+renderCart();
+}
+
+onSnapshot(collection(db,"menuItems"),snapshot=>{
+menu.innerHTML="";
+Object.keys(products).forEach(k=>delete products[k]);
+
+const groups={};
+
+snapshot.docs.forEach(doc=>{
+const p={id:doc.id,...doc.data()};
+if(p.Available===false)return;
+
+products[p.id]=p;
+const cat=p.Category||"Menu";
+if(!groups[cat])groups[cat]=[];
+groups[cat].push(p);
+});
+
+Object.keys(groups).forEach(category=>{
+const section=document.createElement("section");
+const heading=document.createElement("h2");
+heading.textContent=category;
+section.append(heading);
+
+groups[category].forEach(p=>{
+const row=document.createElement("div");
+row.className="item";
+
+const info=document.createElement("div");
+const name=document.createElement("strong");
+name.textContent=p.Name||"";
+const price=document.createElement("div");
+price.className="price";
+price.textContent="₹"+p.Price;
+info.append(name,price);
+
+const controls=document.createElement("div");
+controls.className="controls";
+
+const minus=document.createElement("button");
+minus.textContent="−";
+minus.onclick=()=>changeQty(p.id,-1);
+
+const number=document.createElement("span");
+number.textContent=quantities[p.id]||0;
+
+const plus=document.createElement("button");
+plus.textContent="+";
+plus.onclick=()=>changeQty(p.id,1);
+
+controls.append(minus,number,plus);
+row.append(info,controls);
+section.append(row);
+});
+
+menu.append(section);
+});
+
+renderCart();
+},error=>{
+menu.textContent="મેનૂ લોડ થયું નથી. Firebase Rules તપાસો.";
+console.error(error);
+});
+
+document.getElementById("placeOrder").onclick=async()=>{
+if(busy)return;
+
+const name=document.getElementById("customerName").value.trim();
+const phone=document.getElementById("mobile").value.replace(/\D/g,"");
+const {total,count}=renderCart();
+const message=document.getElementById("message");
+
+if(!count){message.textContent="પહેલા વસ્તુ પસંદ કરો.";return;}
+if(!name){message.textContent="નામ લખો.";return;}
+if(!/^\d{10}$/.test(phone)){
+message.textContent="યોગ્ય 10 અંકનો મોબાઇલ નંબર લખો.";
+return;
+}
+
+const items=Object.keys(quantities)
+.filter(id=>quantities[id]>0 && products[id])
+.map(id=>({
+menuItemId:id,
+name:products[id].Name,
+category:products[id].Category||"",
+price:Number(products[id].Price),
+quantity:quantities[id],
+lineTotal:Number(products[id].Price)*quantities[id]
+}));
+
+busy=true;
+const btn=document.getElementById("placeOrder");
+btn.disabled=true;
+message.textContent="ઓર્ડર સાચવાઈ રહ્યો છે...";
+
+try{
+const ref=await addDoc(collection(db,"orders"),{
+customerName:name,
+mobile:phone,
+items:items,
+total:total,
+status:"New Order",
+createdAt:serverTimestamp()
+});
+
+const details=items.map(x=>
+x.name+" × "+x.quantity+" = ₹"+x.lineTotal
+).join("\n");
+
+const text=
+"નવો ઓર્ડર #"+ref.id+
+"\nનામ: "+name+
+"\nમોબાઇલ: "+phone+
+"\n"+details+
+"\nકુલ બિલ: ₹"+total;
+
+window.location.href=
+"https://wa.me/919879875759?text="+encodeURIComponent(text);
+
+}catch(error){
+message.textContent="ઓર્ડર સાચવાયો નથી: "+error.message;
+console.error(error);
+}finally{
+busy=false;
+btn.disabled=false;
+}
+};
 </script>
 </body>
 </html>
