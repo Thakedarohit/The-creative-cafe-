@@ -15,12 +15,13 @@ main{max-width:700px;margin:auto;padding:15px}
 h2{color:#e8bd59;border-bottom:1px solid #806020;padding-bottom:8px}
 .item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 4px;border-bottom:1px solid #333}
 .price{color:#f5d27a;margin-top:5px}
-.controls{display:flex;align-items:center;gap:10px}
+.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 button{border:0;border-radius:7px;padding:10px 14px;background:#c9a45d;color:#111;font-weight:bold}
+select{background:#111;color:#f5d27a;border:1px solid #806020;border-radius:6px;padding:8px}
 .panel{background:#171717;border:1px solid #806020;border-radius:12px;padding:15px;margin-top:20px}
 input{width:100%;padding:12px;background:#111;color:white;border:1px solid #806020;border-radius:7px;font-size:16px}
 label{display:block;margin:12px 0 6px;color:#e8d7b2}
-.line{display:flex;justify-content:space-between;padding:7px 0}
+.line{display:flex;justify-content:space-between;gap:8px;padding:7px 0}
 .total{font-size:22px;color:#f5d27a}
 .submit{width:100%;margin-top:15px;padding:14px}
 #message{color:#f5d27a;white-space:pre-wrap}
@@ -33,7 +34,6 @@ label{display:block;margin:12px 0 6px;color:#e8d7b2}
 </header>
 <main>
 <div id="menu">મેનૂ લોડ થઈ રહ્યું છે...</div>
-
 <section class="panel">
 <h2>તમારો ઓર્ડર</h2>
 <div id="cart">હજુ કોઈ વસ્તુ પસંદ કરી નથી.</div>
@@ -41,28 +41,18 @@ label{display:block;margin:12px 0 6px;color:#e8d7b2}
 <strong>કુલ બિલ</strong>
 <strong class="total" id="total">₹0</strong>
 </div>
-
 <label>ગ્રાહકનું નામ *</label>
 <input id="customerName" placeholder="તમારું નામ">
-
 <label>મોબાઇલ નંબર *</label>
-<input id="mobile" inputmode="numeric" maxlength="10"
-placeholder="10 અંકનો નંબર">
-
-<button class="submit" id="placeOrder">
-ઓર્ડર કન્ફર્મ કરો
-</button>
+<input id="mobile" inputmode="numeric" maxlength="10" placeholder="10 અંકનો નંબર">
+<button class="submit" id="placeOrder">ઓર્ડર કન્ફર્મ કરો</button>
 <div id="message"></div>
 </section>
 </main>
 
 <script type="module">
-import {initializeApp}
-from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-
-import {
-getFirestore,collection,onSnapshot,addDoc,serverTimestamp
-} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import {getFirestore,collection,onSnapshot,addDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey:"AIzaSyAkCeioTxKKnFPVHUfRXcCQmH88SwyB9jE",
@@ -78,37 +68,56 @@ const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 const menu=document.getElementById("menu");
 const cart=document.getElementById("cart");
-
 const quantities={};
 const products={};
 let busy=false;
+
+function hasSizes(p){
+return p.PriceSmall!==undefined &&
+p.PriceLarge!==undefined &&
+Number.isFinite(Number(p.PriceSmall)) &&
+Number.isFinite(Number(p.PriceLarge));
+}
+
+function itemPrice(p,size){
+return hasSizes(p)
+? Number(size==="Large"?p.PriceLarge:p.PriceSmall)
+: Number(p.Price);
+}
 
 function renderCart(){
 cart.innerHTML="";
 let total=0,count=0;
 
-Object.keys(quantities).forEach(id=>{
-const q=quantities[id];
-if(q<=0 || !products[id]) return;
+Object.keys(quantities).forEach(key=>{
+const q=quantities[key];
+const parts=key.split("::");
+const id=parts[0];
+const size=parts[1]||"";
+
+if(q<=0 || !products[id])return;
 
 const p=products[id];
-const price=Number(p.Price);
+const price=itemPrice(p,size);
 total+=price*q;
 count+=q;
 
 const row=document.createElement("div");
 row.className="line";
-row.textContent=p.Name+" × "+q+" = ₹"+(price*q);
+row.textContent=(p.Name||"")+
+(size?" ("+size+")":"")+
+" × "+q+" = ₹"+(price*q);
 cart.append(row);
 });
 
-if(count===0) cart.textContent="હજુ કોઈ વસ્તુ પસંદ કરી નથી.";
+if(count===0)cart.textContent="હજુ કોઈ વસ્તુ પસંદ કરી નથી.";
 document.getElementById("total").textContent="₹"+total;
 return {total,count};
 }
 
-function changeQty(id,change){
-quantities[id]=Math.max(0,(quantities[id]||0)+change);
+function changeQty(id,change,size){
+const key=id+"::"+(size||"");
+quantities[key]=Math.max(0,(quantities[key]||0)+change);
 renderCart();
 }
 
@@ -141,25 +150,54 @@ row.className="item";
 const info=document.createElement("div");
 const name=document.createElement("strong");
 name.textContent=p.Name||"";
+
 const price=document.createElement("div");
 price.className="price";
-price.textContent="₹"+p.Price;
-info.append(name,price);
 
 const controls=document.createElement("div");
 controls.className="controls";
 
+let sizeSelect=null;
+
+if(hasSizes(p)){
+price.textContent="Small ₹"+p.PriceSmall+" | Large ₹"+p.PriceLarge;
+sizeSelect=document.createElement("select");
+sizeSelect.innerHTML=
+'<option value="Small">Small</option><option value="Large">Large</option>';
+controls.append(sizeSelect);
+}else{
+price.textContent="₹"+p.Price;
+}
+
+info.append(name,price);
+
+const currentSize=()=>sizeSelect?sizeSelect.value:"";
+
 const minus=document.createElement("button");
 minus.textContent="−";
-minus.onclick=()=>changeQty(p.id,-1);
 
 const number=document.createElement("span");
-number.textContent=quantities[p.id]||0;
+
+const updateNumber=()=>{
+const key=p.id+"::"+currentSize();
+number.textContent=quantities[key]||0;
+};
+
+minus.onclick=()=>{
+changeQty(p.id,-1,currentSize());
+updateNumber();
+};
 
 const plus=document.createElement("button");
 plus.textContent="+";
-plus.onclick=()=>changeQty(p.id,1);
+plus.onclick=()=>{
+changeQty(p.id,1,currentSize());
+updateNumber();
+};
 
+if(sizeSelect)sizeSelect.onchange=updateNumber;
+
+updateNumber();
 controls.append(minus,number,plus);
 row.append(info,controls);
 section.append(row);
@@ -190,15 +228,24 @@ return;
 }
 
 const items=Object.keys(quantities)
-.filter(id=>quantities[id]>0 && products[id])
-.map(id=>({
+.filter(key=>quantities[key]>0 && products[key.split("::")[0]])
+.map(key=>{
+const parts=key.split("::");
+const id=parts[0];
+const size=parts[1]||"";
+const p=products[id];
+const price=itemPrice(p,size);
+
+return {
 menuItemId:id,
-name:products[id].Name,
-category:products[id].Category||"",
-price:Number(products[id].Price),
-quantity:quantities[id],
-lineTotal:Number(products[id].Price)*quantities[id]
-}));
+name:p.Name,
+category:p.Category||"",
+...(size?{size:size}:{}),
+price:price,
+quantity:quantities[key],
+lineTotal:price*quantities[key]
+};
+});
 
 busy=true;
 const btn=document.getElementById("placeOrder");
@@ -216,7 +263,8 @@ createdAt:serverTimestamp()
 });
 
 const details=items.map(x=>
-x.name+" × "+x.quantity+" = ₹"+x.lineTotal
+x.name+(x.size?" ("+x.size+")":"")+
+" × "+x.quantity+" = ₹"+x.lineTotal
 ).join("\n");
 
 const text=
