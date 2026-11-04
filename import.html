@@ -1,1 +1,275 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Creative Cafe - Menu Import</title>
+<style>
+body{background:#101010;color:#f7e8c5;font-family:Arial;padding:20px}
+.card{max-width:600px;margin:auto;background:#222;padding:20px;border:1px solid #c9a45d;border-radius:12px}
+input,button{width:100%;padding:13px;margin:8px 0;box-sizing:border-box;border-radius:7px}
+input{background:#111;color:white;border:1px solid #c9a45d}
+button{background:#c9a45d;color:#111;font-weight:bold;border:0}
+#status{white-space:pre-wrap;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>☕ The Creative Cafe</h2>
+<h3>157 Menu Import</h3>
+<input id="email" type="email" placeholder="Admin Email">
+<input id="password" type="password" placeholder="Admin Password">
+<button id="login">Login</button>
+<button id="import" disabled>Import 157 Menu Items</button>
+<p id="status">પહેલા Admin Login કરો.</p>
+</div>
 
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import {getAuth,signInWithEmailAndPassword,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import {getFirestore,collection,getDocs,doc,writeBatch} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyAkCeioTxKKnFPVHUfRXcCQmH88SwyB9jE",
+authDomain:"the-creativit-cafe-manu.firebaseapp.com",
+projectId:"the-creativit-cafe-manu",
+storageBucket:"the-creativit-cafe-manu.firebasestorage.app",
+messagingSenderId:"806496134143",
+appId:"1:806496134143:web:750eaea05f4565d7bb3dca",
+measurementId:"G-M7H7506ZHE"
+};
+
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
+const status=document.getElementById("status");
+const importBtn=document.getElementById("import");
+
+const raw=`
+HOT COFFEE|Espresso|70
+HOT COFFEE|Doppio|90
+HOT COFFEE|Ristretto|70
+HOT COFFEE|Lungo|80
+HOT COFFEE|Americano|100
+HOT COFFEE|Long Black|100
+HOT COFFEE|Cappuccino|120
+HOT COFFEE|Cafe Latte|120
+HOT COFFEE|Flat White|130
+HOT COFFEE|Cortado|110
+HOT COFFEE|Piccolo Latte|110
+HOT COFFEE|Macchiato|90
+HOT COFFEE|Latte Macchiato|120
+HOT COFFEE|Caramel Macchiato|150
+HOT COFFEE|Mocha|150
+HOT COFFEE|White Chocolate Mocha|160
+HOT COFFEE|Dark Chocolate Mocha|160
+HOT COFFEE|Breve|140
+HOT COFFEE|Spanish Latte|150
+HOT COFFEE|Cafe Bon Bon|140
+HOT COFFEE|Arabic Coffee|120
+HOT COFFEE|South Indian Filter Coffee|90
+HOT COFFEE|V60 Coffee|120
+HOT COFFEE|Moka Pot Coffee|130
+HOT COFFEE|Vanilla Latte|140
+HOT COFFEE|Caramel Latte|140
+HOT COFFEE|Hazelnut Latte|150
+HOT COFFEE|Almond Latte|150
+HOT COFFEE|Pista Latte|160
+HOT COFFEE|Coconut Latte|140
+HOT COFFEE|Butterscotch Latte|150
+HOT COFFEE|Nutella Coffee|170
+HOT COFFEE|Honey Latte|140
+HOT COFFEE|Cinnamon Latte|130
+HOT COFFEE|Hazelnut Mocha|170
+ICED COFFEE|Iced Americano|100
+ICED COFFEE|Iced Long Black|100
+ICED COFFEE|Iced Latte|120
+ICED COFFEE|Iced Cappuccino|130
+ICED COFFEE|Iced Flat White|130
+ICED COFFEE|Iced Cortado|120
+ICED COFFEE|Iced Spanish Latte|140
+ICED COFFEE|Iced Vietnamese Coffee|140
+ICED COFFEE|V60 Coffee|160
+ICED COFFEE|Iced Cafe Bombon|140
+ICED COFFEE|Iced Mocha|150
+ICED COFFEE|Iced Caramel Coffee|150
+ICED COFFEE|Iced Vanilla Coffee|150
+ICED COFFEE|Iced Hazelnut Coffee|160
+ICED COFFEE|Iced Almond Coffee|160
+ICED COFFEE|Iced Pista Coffee|170
+ICED COFFEE|Iced Coconut Coffee|150
+ICED COFFEE|Iced Butterscotch Coffee|150
+ICED COFFEE|Iced Salted Caramel Coffee|160
+ICED COFFEE|Iced Honey Coffee|150
+ICED COFFEE|Iced Nutella Coffee|180
+ICED COFFEE|Iced Cookies & Cream Coffee|170
+ICED COFFEE|Iced Tiramisu Coffee|180
+ICED COFFEE|Iced Caramel Macchiato|170
+ICED COFFEE|Iced Dark Mocha|170
+ICED COFFEE|Iced Hazelnut Mocha|180
+ICED COFFEE|Iced Coconut Mocha|170
+ICED COFFEE|Iced Almond Mocha|180
+ICED COFFEE|Iced Pista Mocha|190
+ICED COFFEE|Iced Strawberry Coffee|160
+ICED COFFEE|Iced Blueberry Coffee|170
+ICED COFFEE|Iced Raspberry Coffee|170
+ICED COFFEE|Iced Blackberry Coffee|170
+ICED COFFEE|Iced Orange Coffee|150
+ICED COFFEE|Iced Lavender Coffee|170
+ICED COFFEE|Iced Vanilla Berry Coffee|180
+ICED COFFEE|Iced Strawberry Cream Coffee|190
+ICED COFFEE|Iced Blueberry Cream Coffee|190
+ICED COFFEE|Iced Raspberry Cream Coffee|190
+ICED COFFEE|Iced Masala Coffee|150
+ICED COFFEE|Iced Caramel Popcorn Coffee|180
+ICED COFFEE|Creative Cafe Signature Iced Coffee|200
+ICED COFFEE|Iced Cold Brew|140
+COLD COFFEE|Classic Cold Coffee|120
+COLD COFFEE|Strong Cold Coffee|130
+COLD COFFEE|Chocolate Cold Coffee|140
+COLD COFFEE|Caramel Cold Coffee|140
+COLD COFFEE|Vanilla Cold Coffee|140
+COLD COFFEE|Hazelnut Cold Coffee|150
+COLD COFFEE|Almond Cold Coffee|150
+COLD COFFEE|Pista Cold Coffee|160
+COLD COFFEE|Coconut Cold Coffee|140
+COLD COFFEE|Butterscotch Cold Coffee|140
+COLD COFFEE|Dark Chocolate Cold Coffee|150
+COLD COFFEE|White Chocolate Cold Coffee|150
+COLD COFFEE|Nutella Cold Coffee|170
+COLD COFFEE|Oreo Cold Coffee|150
+COLD COFFEE|Kitkat Cold Coffee|160
+COLD COFFEE|Brownie Cold Coffee|160
+INSTANT COFFEE (HOT) - Gujarati Style Small/Large|Hot Coffee|30/60
+INSTANT COFFEE (HOT) - Gujarati Style Small/Large|Chocolate Coffee|40/80
+INSTANT COFFEE (HOT) - Gujarati Style Small/Large|Hazelnut Coffee|50/100
+INSTANT COFFEE (HOT) - Gujarati Style Small/Large|Nutella Coffee|50/100
+AFFOGATO|Classic Affogato|100
+AFFOGATO|Hazelnut Affogato|120
+AFFOGATO|Mocha Affogato|130
+AFFOGATO|Caramel Affogato|120
+AFFOGATO|Vanilla Affogato|120
+AFFOGATO|Pista Affogato|150
+AFFOGATO|Strawberry Affogato|130
+AFFOGATO|Chocolate Affogato|130
+MILKSHAKE|Vanilla Shake|130
+MILKSHAKE|Chocolate Shake|140
+MILKSHAKE|Bournvita Shake|140
+MILKSHAKE|Oreo Shake|150
+MILKSHAKE|Kitkat Shake|160
+MILKSHAKE|Brownie Shake|150
+MILKSHAKE|Mix Chocolate Shake|160
+MILKSHAKE|Nutella Almond Shake|180
+MILKSHAKE|Hazelnut Almond Shake|180
+MILKSHAKE|Biscoff Shake|150
+HOT CHOCOLATE|Hot Chocolate|50/100
+HOT CHOCOLATE|Oreo Hot Chocolate|150
+HOT CHOCOLATE|Kitkat Hot Chocolate|170
+HOT CHOCOLATE|Brownie Hot Chocolate|150
+HOT CHOCOLATE|Nutella Brownie Almond|180
+HOT CHOCOLATE|Hazelnut Brownie Almond|180
+BROWNIE PIECE|Dark Chocolate|100
+BROWNIE PIECE|White Chocolate|120
+BROWNIE PIECE|Milk Chocolate|120
+BROWNIE PIECE|Biscoff|130
+BROWNIE PIECE|Oreo|130
+BROWNIE PIECE|Kitkat|140
+BROWNIE PIECE|Nutella|150
+BROWNIE PIECE|Hazelnut|150
+MOJITO|Mojito|120
+MOJITO|Blue Curacao|120
+MOJITO|Peach Tea|120
+MOJITO|Lemon Tea|120
+MOJITO|Kiwi|140
+MOJITO|Strawberry|140
+MOJITO|Pineapple|130
+MOJITO|Watermelon|120
+MOJITO|4 Berry Mix|140
+MOJITO|Blueberry|140
+MOJITO|Blackberry|140
+MOJITO|Raspberry|140
+CROISSANT|Butter Croissant|90
+CROISSANT|Strawberry Croissant|140
+CROISSANT|Chocolate Croissant|100
+CROISSANT|Pista Croissant|140
+CROISSANT|Pista with Kunafa Croissant|160
+CROISSANT|Nutella Almond Croissant|180
+CROISSANT|Hazelnut Almond Croissant|180
+MATCHA|Regular Matcha|350
+MATCHA|Vanilla Matcha|350
+MATCHA|Strawberry Matcha|380
+MATCHA|Blackberry Matcha|380
+MATCHA|Mango Matcha|380
+MATCHA|Dragon Fruit Matcha|400
+MATCHA|Kiwi Matcha|380
+MATCHA|White Chocolate Pista Matcha|420
+`.trim();
+
+const items=raw.split("\n").map(line=>{
+ const [Category,Name,priceText]=line.split("|");
+ if(priceText.includes("/")){
+  const [small,large]=priceText.split("/").map(Number);
+  return {Category,Name,Price:small,PriceSmall:small,PriceLarge:large};
+ }
+ return {Category,Name,Price:Number(priceText)};
+});
+
+document.getElementById("login").addEventListener("click",async()=>{
+ status.textContent="Login થઈ રહ્યું છે...";
+ try{
+  await signInWithEmailAndPassword(auth,
+   document.getElementById("email").value.trim(),
+   document.getElementById("password").value);
+  status.textContent="Login સફળ. હવે Import બટન દબાવો.";
+ }catch(e){status.textContent="Login ભૂલ: "+e.message;}
+});
+
+onAuthStateChanged(auth,user=>{
+ importBtn.disabled=!user;
+});
+
+importBtn.addEventListener("click",async()=>{
+ if(!auth.currentUser){status.textContent="પહેલા Login કરો.";return;}
+ importBtn.disabled=true;
+ status.textContent="મેનૂ તપાસી રહ્યું છે...";
+ try{
+  const ref=collection(db,"menuItems");
+  const snap=await getDocs(ref);
+  const existing=new Map();
+  snap.forEach(d=>{
+   const v=d.data();
+   existing.set((v.Category||"").trim().toLowerCase()+"||"+(v.Name||"").trim().toLowerCase(),d);
+  });
+
+  const batch=writeBatch(db);
+  let added=0,updated=0;
+
+  for(const item of items){
+   const key=item.Category.toLowerCase()+"||"+item.Name.toLowerCase();
+   const old=existing.get(key);
+   if(old){
+    batch.set(doc(db,"menuItems",old.id),item,{merge:true});
+    updated++;
+   }else{
+    const newRef=doc(ref);
+    batch.set(newRef,{...item,Available:true});
+    added++;
+   }
+  }
+
+  await batch.commit();
+  status.textContent=
+   "સફળતાપૂર્વક Import પૂર્ણ થયું!\n"+
+   "કુલ યાદી: "+items.length+
+   "\nનવી ઉમેરેલી: "+added+
+   "\nજૂની અપડેટ: "+updated+
+   "\nજૂની અન્ય વસ્તુઓ ડિલીટ કરી નથી.";
+ }catch(e){
+  status.textContent="Import થયું નથી:\n"+e.message+
+   "\nFirestore Rules અથવા Admin Login તપાસો.";
+ }
+ importBtn.disabled=false;
+});
+</script>
+</body>
+</html>
