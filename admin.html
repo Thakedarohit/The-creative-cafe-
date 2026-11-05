@@ -50,7 +50,12 @@
   </section>
   <p class="muted">નોંધ: આ પેજનો સરનામું તમારી વેબસાઇટના અંતે /admin.html ઉમેરવાથી ખુલશે. Firestore Rules માં public read અને signed-in admin write સુરક્ષિત રીતે સેટ કરવું જરૂરી છે.</p>
 </div>
-
+  
+<section class="card hidden" id="ordersCard">
+  <h2>📦 ગ્રાહકોના ઓર્ડર</h2>
+  <button type="button" id="refreshOrdersBtn">ઓર્ડર રિફ્રેશ કરો</button>
+  <div id="ordersList">ઓર્ડર લોડ થઈ રહ્યા છે...</div>
+</section>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
@@ -149,6 +154,52 @@
       $("adminStatus").textContent = "મેનૂ લોડ થયું નથી: " + err.message + " — Firestore Rules તપાસવાની જરૂર હોઈ શકે છે.";
     }
   }
+  const ordersCard = $("ordersCard");
+
+async function loadOrders() {
+  const list = $("ordersList");
+  list.textContent = "ઓર્ડર લોડ થઈ રહ્યા છે...";
+
+  try {
+    const snap = await getDocs(collection(db, "orders"));
+    list.replaceChildren();
+
+    if (snap.empty) {
+      list.textContent = "હજુ કોઈ ઓર્ડર આવ્યો નથી.";
+      return;
+    }
+
+    snap.forEach(order => {
+      const d = order.data();
+      const box = document.createElement("div");
+      box.className = "item";
+
+      const info = document.createElement("div");
+      info.textContent =
+        "ઓર્ડર: " + order.id +
+        " | નામ: " + (d.customerName || "") +
+        " | મોબાઇલ: " + (d.mobile || "") +
+        " | કુલ: ₹" + (d.total || 0) +
+        " | સ્થિતિ: " + (d.status || "");
+
+      const items = document.createElement("div");
+      items.className = "muted";
+      items.textContent = "વસ્તુઓ: " + JSON.stringify(d.items || []);
+
+      box.append(info, items);
+      list.append(box);
+    });
+  } catch (err) {
+    list.textContent = "ઓર્ડર લોડ થયા નથી: " + err.message;
+  }
+}
+
+$("refreshOrdersBtn").addEventListener("click", loadOrders);
+
+onAuthStateChanged(auth, user => {
+  ordersCard.classList.toggle("hidden", !user);
+  if (user) loadOrders();
+});
 </script>
 </body>
 </html>
