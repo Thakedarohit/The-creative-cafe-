@@ -184,8 +184,9 @@ async function loadOrders() {
 
       const items = document.createElement("div");
       items.className = "muted";
-      items.textContent = "વસ્તુઓ: " + JSON.stringify(d.items || []);
-
+      items.textContent = "વસ્તુઓ: " + (d.items || []).map(x =>
+  `${x.name} × ${x.quantity} — ₹${x.lineTotal}`
+).join(" | ");
       box.append(info, items);
       list.append(box);
     });
