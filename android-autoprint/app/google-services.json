@@ -1,0 +1,17 @@
+{
+  "project_info": {
+    "project_number": "806496134143",
+    "project_id": "the-creativit-cafe-manu",
+    "storage_bucket": "the-creativit-cafe-manu.firebasestorage.app"
+  },
+  "client": [{
+    "client_info": {
+      "mobilesdk_app_id": "1:806496134143:android:22df4a29534f0ee3bb3dca",
+      "android_client_info": {"package_name": "com.thecreativecafe.autoprint"}
+    },
+    "oauth_client": [],
+    "api_key": [{"current_key": "AIzaSyBkGOS2uEgeFViYO7nm3eMhc7KvGt3AZ6Y"}],
+    "services": {"appinvite_service": {"other_platform_oauth_client": []}}
+  }],
+  "configuration_version": "1"
+}
