@@ -1,7 +1,6 @@
 package com.thecreativecafe.autoprint;
 
 import android.app.*;
-import android.bluetooth.BluetoothAdapter;
 import android.content.*;
 import android.content.pm.ServiceInfo;
 import android.os.*;
@@ -31,12 +30,24 @@ public class OrderPrintService extends Service {
         if (Build.VERSION.SDK_INT >= 29)
             startForeground(11, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
         else startForeground(11, n);
+
+        // First activation time prevents old test orders from printing on initial setup.
+        SharedPreferences prefs = getSharedPreferences("printed_orders", MODE_PRIVATE);
+        if (!prefs.contains("first_started_at"))
+            prefs.edit().putLong("first_started_at", System.currentTimeMillis()).apply();
+        final long firstStartedAt = prefs.getLong("first_started_at", System.currentTimeMillis());
+
         db = FirebaseFirestore.getInstance();
         listener = db.collection("orders").addSnapshotListener((snap, error) -> {
-            if (error != null || snap == null) return;
+            if (error != null || snap == null) {
+                if (error != null) updateNotification("Firebase જોડાણની ભૂલ: " + error.getMessage());
+                return;
+            }
             for (DocumentSnapshot doc : snap.getDocuments()) {
                 String status = doc.getString("status");
-                if ("New Order".equalsIgnoreCase(status) && !isPrinted(doc.getId()))
+                Timestamp created = doc.getTimestamp("createdAt");
+                if ("New Order".equalsIgnoreCase(status) && created != null
+                        && created.toDate().getTime() >= firstStartedAt && !isPrinted(doc.getId()))
                     pending.put(doc.getId(), doc.getData());
             }
             attemptPending();
