@@ -79,11 +79,22 @@ public class OrderPrintService extends Service {
                     String address = getSharedPreferences("cafe_print", MODE_PRIVATE).getString("printer_address", null);
                     if (address == null) return;
                     ReceiptPrinter.print(this, address, id, data);
+                    // Save locally first so a Firestore listener update cannot enqueue this order again.
                     getSharedPreferences("printed_orders", MODE_PRIVATE).edit().putBoolean(id, true).apply();
                     pending.remove(id);
-                    handler.post(() -> updateNotification("ઓર્ડર " + id + " પ્રિન્ટ થયો"));
+                    Map<String, Object> printUpdate = new HashMap<>();
+                    printUpdate.put("printStatus", "Printed");
+                    printUpdate.put("printedAt", FieldValue.serverTimestamp());
+                    printUpdate.put("printError", FieldValue.delete());
+                    db.collection("orders").document(id).update(printUpdate);
+                    handler.post(() -> updateNotification("ઓર્ડર " + id.substring(0, Math.min(8, id.length())).toUpperCase() + " પ્રિન્ટ થયો"));
                 } catch (Exception e) {
-                    handler.post(() -> updateNotification("પ્રિન્ટ બાકી છે: " + e.getMessage()));
+                    String message = e.getMessage() == null ? "Unknown print error" : e.getMessage();
+                    Map<String, Object> failureUpdate = new HashMap<>();
+                    failureUpdate.put("printStatus", "Failed");
+                    failureUpdate.put("printError", message);
+                    db.collection("orders").document(id).update(failureUpdate);
+                    handler.post(() -> updateNotification("પ્રિન્ટ બાકી છે: " + message));
                 } finally { printing.remove(id); }
             });
         }
