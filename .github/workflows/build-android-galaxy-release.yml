@@ -1,0 +1,42 @@
+name: Build The Creative Cafe Galaxy Store Release Bundle
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'android-autoprint/**'
+      - '.github/workflows/build-android-galaxy-release.yml'
+
+jobs:
+  build-release-bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Build release Android App Bundle
+        run: gradle -p android-autoprint :app:bundleRelease
+
+      - name: Upload release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: the-creative-cafe-galaxy-store-release-aab
+          path: android-autoprint/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
