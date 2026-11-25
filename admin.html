@@ -203,29 +203,92 @@ let autoPrintStarted = false;
 let stopPendingOrders = null;
 const printingOrders = new Set();
 
-function receiptContent(orderId, data) {
-  const content = [
-    {type:"text", text:"THE CREATIVE CAFE", align:"center", bold:true, size:"large"},
-    {type:"text", text:"સુકૂન का दूसरा नाम — कॉफी।", align:"center"},
-    {type:"divider"},
-    {type:"text", text:"TOKEN: " + orderId.slice(0,8), bold:true, size:"large"},
-    {type:"text", text:"નામ: " + (data.customerName || "")},
-    {type:"text", text:"મોબાઇલ: " + (data.mobile || "")},
-    {type:"divider"}
-  ];
+async function receiptContent(orderId, data) {
+  // Render the complete receipt as a PNG so Gujarati glyphs are shaped by
+  // Android's browser fonts instead of the printer's limited ESC/POS codepage.
+  const canvas = document.createElement("canvas");
+  const width = 576; // 80 mm at typical 203 dpi
+  const pad = 28;
+  const lineHeight = 38;
+  const font = '26px "Noto Sans Gujarati", "Nirmala UI", sans-serif';
+  const boldFont = 'bold 28px "Noto Sans Gujarati", "Nirmala UI", sans-serif';
+  const ctx = canvas.getContext("2d");
+  const rows = [];
+  const wrap = (value, maxWidth, useBold=false) => {
+    ctx.font = useBold ? boldFont : font;
+    const words = String(value ?? "").split(/\s+/);
+    let line = "";
+    const lines = [];
+    for (const word of words) {
+      const test = line ? line + " " + word : word;
+      if (line && ctx.measureText(test).width > maxWidth) {
+        lines.push(line);
+        line = word;
+      } else line = test;
+    }
+    if (line) lines.push(line);
+    return lines;
+  };
+  const addText = (value, opts={}) => {
+    for (const line of wrap(value, width-pad*2, !!opts.bold)) {
+      rows.push({text:line, align:opts.align || "left", bold:!!opts.bold, gap:opts.gap || 0});
+    }
+  };
+  const addDivider = () => rows.push({divider:true});
+  addText("THE CREATIVE CAFE",{align:"center",bold:true,gap:5});
+  addText("સુકૂન का दूसरा नाम — कॉफी।",{align:"center",gap:4});
+  addDivider();
+  addText("TOKEN: " + orderId.slice(0,8),{bold:true});
+  addText("ગ્રાહકનું નામ: " + (data.customerName || ""));
+  addText("મોબાઇલ: " + (data.mobile || ""));
+  addDivider();
   (Array.isArray(data.items) ? data.items : []).forEach(item => {
-    content.push({
-      type:"row",
-      left:String(item.name || "Item") + (item.size ? " " + item.size : "") + " x" + Number(item.quantity || 0),
-      right:"₹" + Number(item.lineTotal || 0).toFixed(0)
-    });
+    const label = String(item.name || "Item") +
+      (item.size ? " (" + item.size + ")" : "") +
+      " x" + Number(item.quantity || 0);
+    const amount = "₹" + Number(item.lineTotal || 0).toFixed(0);
+    ctx.font = font;
+    const amountWidth = ctx.measureText(amount).width;
+    const available = width - pad*2 - amountWidth - 18;
+    const labelLines = wrap(label, available);
+    rows.push({text:labelLines[0] || "", right:amount});
+    labelLines.slice(1).forEach(line => rows.push({text:line}));
   });
-  content.push(
-    {type:"divider"},
-    {type:"row", left:"TOTAL", right:"₹" + Number(data.total || 0).toFixed(0), bold:true},
-    {type:"feed", lines:3}
-  );
-  return content;
+  addDivider();
+  rows.push({text:"કુલ બિલ",right:"₹" + Number(data.total || 0).toFixed(0),bold:true,gap:8});
+  addText("આભાર! ફરી પધારજો.",{align:"center",gap:10});
+
+  const height = Math.max(220, pad*2 + rows.reduce((n,row)=>n+(row.divider?22:lineHeight+(row.gap||0)),0));
+  canvas.width = width;
+  canvas.height = height;
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0,0,width,height);
+  ctx.fillStyle = "#000";
+  ctx.textBaseline = "top";
+  let y = pad;
+  for (const row of rows) {
+    if (row.divider) {
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(pad,y+8); ctx.lineTo(width-pad,y+8); ctx.stroke();
+      y += 22;
+      continue;
+    }
+    ctx.font = row.bold ? boldFont : font;
+    if (row.right) {
+      ctx.textAlign = "left";
+      ctx.fillText(row.text || "",pad,y);
+      ctx.textAlign = "right";
+      ctx.fillText(row.right,width-pad,y);
+    } else {
+      ctx.textAlign = row.align || "left";
+      const x = row.align === "center" ? width/2 : pad;
+      ctx.fillText(row.text || "",x,y);
+    }
+    y += lineHeight + (row.gap || 0);
+  }
+  const dataUrl = canvas.toDataURL("image/png");
+  return [{type:"image",base64:dataUrl.split(",")[1],align:"center",dither:false}];
 }
 
 async function printPendingOrder(orderDoc) {
@@ -237,7 +300,7 @@ async function printPendingOrder(orderDoc) {
     const response = await fetch("http://localhost:9100/print", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({cut:true, content:receiptContent(orderDoc.id, orderDoc.data())})
+      body:JSON.stringify({cut:true, paperWidth:80, content:await receiptContent(orderDoc.id, orderDoc.data())})
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || result.status !== "printed") {
