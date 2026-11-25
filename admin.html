@@ -54,12 +54,14 @@
 <section class="card hidden" id="ordersCard">
   <h2>📦 ગ્રાહકોના ઓર્ડર</h2>
   <button type="button" id="refreshOrdersBtn">ઓર્ડર રિફ્રેશ કરો</button>
+  <button type="button" id="startAutoPrintBtn">ઓટો પ્રિન્ટ ચાલુ કરો</button>
+  <div id="printStatus" class="status">ઓટો પ્રિન્ટ બંધ છે. ચાલુ કરવા ઉપરનું બટન દબાવો.</div>
   <div id="ordersList">ઓર્ડર લોડ થઈ રહ્યા છે...</div>
 </section>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAkCeioTxKKnFPVHUfRXcCQmH88SwyB9jE",
@@ -196,6 +198,88 @@ async function loadOrders() {
 }
 
 $("refreshOrdersBtn").addEventListener("click", loadOrders);
+
+let autoPrintStarted = false;
+let stopPendingOrders = null;
+const printingOrders = new Set();
+
+function receiptContent(orderId, data) {
+  const content = [
+    {type:"text", text:"THE CREATIVE CAFE", align:"center", bold:true, size:"large"},
+    {type:"text", text:"સુકૂન का दूसरा नाम — कॉफी।", align:"center"},
+    {type:"divider"},
+    {type:"text", text:"TOKEN: " + orderId.slice(0,8), bold:true, size:"large"},
+    {type:"text", text:"નામ: " + (data.customerName || "")},
+    {type:"text", text:"મોબાઇલ: " + (data.mobile || "")},
+    {type:"divider"}
+  ];
+  (Array.isArray(data.items) ? data.items : []).forEach(item => {
+    content.push({
+      type:"row",
+      left:String(item.name || "Item") + (item.size ? " " + item.size : "") + " x" + Number(item.quantity || 0),
+      right:"₹" + Number(item.lineTotal || 0).toFixed(0)
+    });
+  });
+  content.push(
+    {type:"divider"},
+    {type:"row", left:"TOTAL", right:"₹" + Number(data.total || 0).toFixed(0), bold:true},
+    {type:"feed", lines:3}
+  );
+  return content;
+}
+
+async function printPendingOrder(orderDoc) {
+  if (printingOrders.has(orderDoc.id)) return;
+  printingOrders.add(orderDoc.id);
+  const orderRef = doc(db, "orders", orderDoc.id);
+  try {
+    await updateDoc(orderRef, {printStatus:"Printing"});
+    const response = await fetch("http://localhost:9100/print", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({cut:true, content:receiptContent(orderDoc.id, orderDoc.data())})
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.status !== "printed") {
+      throw new Error(result.error || "Cleanter print request failed (" + response.status + ")");
+    }
+    await updateDoc(orderRef, {printStatus:"Printed", printedAt:new Date()});
+    $("printStatus").textContent = "ટોકન " + orderDoc.id.slice(0,8) + " સફળતાથી પ્રિન્ટ થયું.";
+  } catch (error) {
+    try { await updateDoc(orderRef, {printStatus:"Failed", printError:String(error.message || error)}); } catch (_) {}
+    $("printStatus").textContent = "પ્રિન્ટ નિષ્ફળ: " + (error.message || error) + ". Cleanter અને પ્રિન્ટર તપાસો.";
+  } finally {
+    printingOrders.delete(orderDoc.id);
+  }
+}
+
+$("startAutoPrintBtn").addEventListener("click", async () => {
+  if (autoPrintStarted) return;
+  $("printStatus").textContent = "Cleanter સાથે જોડાઈ રહ્યું છે...";
+  try {
+    // This first request is deliberately made from the button tap so Chrome can ask for local-device access.
+    const healthResponse = await fetch("http://localhost:9100/health");
+    if (!healthResponse.ok) throw new Error("Cleanter server મળ્યો નથી.");
+    const health = await healthResponse.json();
+    if (health.status !== "ok") throw new Error("Cleanter તૈયાર નથી.");
+    autoPrintStarted = true;
+    const pendingQuery = query(collection(db, "orders"), where("printStatus", "==", "Pending"));
+    stopPendingOrders = onSnapshot(pendingQuery, snapshot => {
+      snapshot.docChanges().forEach(change => {
+        if (change.type === "added" || change.type === "modified") {
+          const data = change.doc.data();
+          if (data.printStatus === "Pending") printPendingOrder(change.doc);
+        }
+      });
+    }, error => {
+      $("printStatus").textContent = "ઓર્ડર સાંભળવામાં ભૂલ: " + error.message;
+    });
+    $("printStatus").textContent = "ઓટો પ્રિન્ટ ચાલુ છે. આ Admin પેજ ખુલ્લું રાખો.";
+    $("startAutoPrintBtn").disabled = true;
+  } catch (error) {
+    $("printStatus").textContent = "જોડાણ થયું નથી: " + (error.message || error) + ". Cleanter ખુલ્લું રાખો અને ફરી પ્રયાસ કરો.";
+  }
+});
 
 onAuthStateChanged(auth, user => {
   ordersCard.classList.toggle("hidden", !user);
