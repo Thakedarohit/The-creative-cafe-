@@ -259,8 +259,12 @@ async function receiptContent(orderId, data) {
   addText("આભાર! ફરી પધારજો.",{align:"center",gap:10});
 
   const height = Math.max(220, pad*2 + rows.reduce((n,row)=>n+(row.divider?22:lineHeight+(row.gap||0)),0));
-  canvas.width = width;
-  canvas.height = height;
+  // Render at 2x resolution so small Gujarati glyph edges remain sharper when
+  // Cleanter scales the receipt to the thermal printer width.
+  const scale = 2;
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.fillStyle = "#fff";
   ctx.fillRect(0,0,width,height);
   ctx.fillStyle = "#000";
