@@ -52,7 +52,7 @@ label{display:block;margin:12px 0 6px;color:#e8d7b2}
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-import {getFirestore,collection,onSnapshot,addDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import {getFirestore,collection,onSnapshot,doc,runTransaction,serverTimestamp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey:"AIzaSyAkCeioTxKKnFPVHUfRXcCQmH88SwyB9jE",
@@ -253,7 +253,14 @@ btn.disabled=true;
 message.textContent="ઓર્ડર સાચવાઈ રહ્યો છે...";
 
 try{
-const ref=await addDoc(collection(db,"orders"),{
+const ref=doc(collection(db,"orders"));
+const counterRef=doc(db,"settings","orderCounter");
+const tokenNumber=await runTransaction(db,async transaction=>{
+const counterSnap=await transaction.get(counterRef);
+const nextNumber=(counterSnap.exists()?Number(counterSnap.data().lastNumber)||0:0)+1;
+transaction.set(counterRef,{lastNumber:nextNumber},{merge:true});
+transaction.set(ref,{
+tokenNumber:nextNumber,
 customerName:name,
 mobile:phone,
 items:items,
@@ -261,6 +268,8 @@ total:total,
 status:"New Order",
 printStatus:"Pending",
 createdAt:serverTimestamp()
+});
+return nextNumber;
 });
 
 const details=items.map(x=>
@@ -270,7 +279,7 @@ x.name+(x.size?" ("+x.size+")":"")+
 
 const text=
 "THE CREATIVE CAFE ☕"+
-"\nનવો ઓર્ડર #"+ref.id+
+"\nટોકન #"+tokenNumber+
 "\nનામ: "+name+
 "\nમોબાઇલ: "+phone+
 "\n"+details+
