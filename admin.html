@@ -61,7 +61,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, where, runTransaction } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAkCeioTxKKnFPVHUfRXcCQmH88SwyB9jE",
@@ -300,7 +300,14 @@ async function printPendingOrder(orderDoc) {
   printingOrders.add(orderDoc.id);
   const orderRef = doc(db, "orders", orderDoc.id);
   try {
-    await updateDoc(orderRef, {printStatus:"Printing"});
+    // Atomically claim the order so another Admin tab/device cannot print it too.
+    const claimed = await runTransaction(db, async transaction => {
+      const latest = await transaction.get(orderRef);
+      if (!latest.exists() || latest.data().printStatus !== "Pending") return false;
+      transaction.update(orderRef, {printStatus:"Printing", printStartedAt:new Date()});
+      return true;
+    });
+    if (!claimed) return;
     const response = await fetch("http://localhost:9100/print", {
       method:"POST",
       headers:{"Content-Type":"application/json"},
