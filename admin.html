@@ -146,6 +146,8 @@
         edit.addEventListener("click", () => {
           $("docId").value = snapDoc.id; $("category").value = d.Category || "";
           $("name").value = d.Name || ""; $("price").value = d.Price ?? "";
+          $("description").value = d.Description || ""; $("imageUrl").value = d.ImageURL || "";
+          $("categoryImageUrl").value = d.CategoryImageURL || "";
           $("available").checked = d.Available !== false; $("saveBtn").textContent = "Update Item";
           window.scrollTo({top:0,behavior:"smooth"});
         });
