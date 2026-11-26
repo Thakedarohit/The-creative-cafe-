@@ -39,6 +39,9 @@
       <label for="category">Category</label><input id="category" required placeholder="જેમ કે Hot Coffee">
       <label for="name">Item Name</label><input id="name" required placeholder="જેમ કે Cappuccino">
       <label for="price">Price (₹)</label><input id="price" type="number" min="0" step="0.01" required placeholder="120">
+      <label for="description">ટૂંકું વર્ણન</label><input id="description" placeholder="જેમ કે Rich espresso with steamed milk">
+      <label for="imageUrl">આ આઇટમનો ફોટો URL</label><input id="imageUrl" type="url" placeholder="https://...">
+      <label for="categoryImageUrl">આ કેટેગરીનો મોટો ફોટો URL</label><input id="categoryImageUrl" type="url" placeholder="https://...">
       <label><input id="available" type="checkbox" checked style="width:auto;margin-right:8px"> Available</label>
       <button type="submit" id="saveBtn">Save Item</button><button type="button" class="secondary" id="clearBtn">Clear</button>
     </form>
@@ -110,6 +113,9 @@
       Category: $("category").value.trim(),
       Name: $("name").value.trim(),
       Price: Number($("price").value),
+      Description: $("description").value.trim(),
+      ImageURL: $("imageUrl").value.trim(),
+      CategoryImageURL: $("categoryImageUrl").value.trim(),
       Available: $("available").checked
     };
     try {
