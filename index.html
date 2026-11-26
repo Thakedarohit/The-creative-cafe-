@@ -25,6 +25,27 @@ label{display:block;margin:12px 0 6px;color:#e8d7b2}
 .total{font-size:22px;color:#f5d27a}
 .submit{width:100%;margin-top:15px;padding:14px}
 #message{color:#f5d27a;white-space:pre-wrap}
+
+/* Premium photo menu */
+:root{scroll-behavior:smooth;scroll-padding-top:112px}
+header{position:relative;background:radial-gradient(ellipse at top,#382b16 0%,#080808 68%);padding:30px 12px 24px}
+header h1{letter-spacing:2px;font-size:clamp(25px,6vw,36px)}
+header p{color:#d9c69c;margin-bottom:0}
+#categoryNav{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow-x:auto;padding:11px 12px;background:rgba(8,8,8,.96);border-bottom:1px solid #806020;scrollbar-width:none}
+#categoryNav a{flex:0 0 auto;text-decoration:none;color:#f5d27a;border:1px solid #806020;border-radius:20px;padding:9px 13px;font-size:13px;font-weight:bold;white-space:nowrap}
+#categoryNav a:active,#categoryNav a:focus{background:#c9a45d;color:#111}
+main{padding:12px;max-width:820px}
+.menu-section{margin:22px 0 30px;scroll-margin-top:74px}
+.category-hero{height:150px;border-radius:15px;overflow:hidden;position:relative;background:linear-gradient(120deg,#392b17,#100e0a 65%,#705021);border:1px solid #9b793c;margin-bottom:14px}
+.category-hero img{width:100%;height:100%;object-fit:cover;display:block;opacity:.72}
+.category-hero h2{position:absolute;left:16px;bottom:8px;margin:0;color:#fff;text-shadow:0 2px 8px #000;border:0;font-size:23px}
+.item{display:grid;grid-template-columns:104px minmax(0,1fr);align-items:center;gap:13px;padding:12px 4px;border-bottom:1px solid #30291e}
+.item-photo{width:104px;height:104px;object-fit:cover;border-radius:12px;background:linear-gradient(135deg,#302515,#111);border:1px solid #5c4828}
+.item-info{min-width:0}.item-info strong{font-size:15px;line-height:1.35;color:#fff}
+.item-description{font-size:12px;color:#bdb3a0;margin-top:5px;line-height:1.4}
+.price{font-weight:bold;margin-top:7px}
+.controls{justify-content:flex-end;gap:7px}.controls button{min-width:34px;padding:8px 11px}
+@media(max-width:390px){.item{grid-template-columns:82px minmax(0,1fr);gap:10px}.item-photo{width:82px;height:90px}.controls{gap:5px}.controls button{padding:7px 9px}}
 </style>
 </head>
 <body>
@@ -33,7 +54,7 @@ label{display:block;margin:12px 0 6px;color:#e8d7b2}
 <p>સુકૂન का दूसरा नाम — कॉफी।</p>
 </header>
 <main>
-<div id="menu">મેનૂ લોડ થઈ રહ્યું છે...</div>
+<nav id="categoryNav" aria-label="Menu categories"></nav><div id="menu">મેનૂ લોડ થઈ રહ્યું છે...</div>
 <section class="panel">
 <h2>તમારો ઓર્ડર</h2>
 <div id="cart">હજુ કોઈ વસ્તુ પસંદ કરી નથી.</div>
@@ -67,6 +88,7 @@ measurementId:"G-M7H7506ZHE"
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 const menu=document.getElementById("menu");
+const categoryNav=document.getElementById("categoryNav");
 const cart=document.getElementById("cart");
 const quantities={};
 const products={};
@@ -137,19 +159,40 @@ if(!groups[cat])groups[cat]=[];
 groups[cat].push(p);
 });
 
-Object.keys(groups).forEach(category=>{
+categoryNav.replaceChildren();
+Object.keys(groups).forEach((category,index)=>{
+const anchor=document.createElement("a");
+anchor.href="#category-"+index;
+anchor.textContent=category;
+categoryNav.append(anchor);
+
 const section=document.createElement("section");
+section.className="menu-section";
+section.id="category-"+index;
+const hero=document.createElement("div");
+hero.className="category-hero";
+if(groups[category][0].CategoryImageURL){const heroImg=document.createElement("img");heroImg.src=groups[category][0].CategoryImageURL;heroImg.alt=category;hero.append(heroImg);}
 const heading=document.createElement("h2");
 heading.textContent=category;
-section.append(heading);
+hero.append(heading);
+section.append(hero);
 
 groups[category].forEach(p=>{
 const row=document.createElement("div");
 row.className="item";
+const photo=document.createElement("img");
+photo.className="item-photo";
+photo.alt=p.Name||"Menu item";
+photo.loading="lazy";
+photo.src=p.ImageURL||p.CategoryImageURL||"https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=320&q=75";
 
 const info=document.createElement("div");
+info.className="item-info";
 const name=document.createElement("strong");
 name.textContent=p.Name||"";
+const description=document.createElement("div");
+description.className="item-description";
+description.textContent=p.Description||"The Creative Cafe ની ખાસ પસંદગી.";
 
 const price=document.createElement("div");
 price.className="price";
@@ -169,7 +212,7 @@ controls.append(sizeSelect);
 price.textContent="₹"+p.Price;
 }
 
-info.append(name,price);
+info.append(name,description,price);
 
 const currentSize=()=>sizeSelect?sizeSelect.value:"";
 
@@ -199,7 +242,7 @@ if(sizeSelect)sizeSelect.onchange=updateNumber;
 
 updateNumber();
 controls.append(minus,number,plus);
-row.append(info,controls);
+row.append(photo,info,controls);
 section.append(row);
 });
 
