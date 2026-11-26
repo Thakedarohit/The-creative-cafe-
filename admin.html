@@ -54,8 +54,8 @@
 <section class="card hidden" id="ordersCard">
   <h2>📦 ગ્રાહકોના ઓર્ડર</h2>
   <button type="button" id="refreshOrdersBtn">ઓર્ડર રિફ્રેશ કરો</button>
-  <button type="button" id="startAutoPrintBtn">ઓટો પ્રિન્ટ ચાલુ કરો</button>
-  <div id="printStatus" class="status">ઓટો પ્રિન્ટ બંધ છે. ચાલુ કરવા ઉપરનું બટન દબાવો.</div>
+  <button type="button" id="startAutoPrintBtn">ઓટો પ્રિન્ટ આપમેળે શરૂ કરો</button>
+  <div id="printStatus" class="status">Admin login થયા પછી ઓટો પ્રિન્ટ આપમેળે શરૂ કરવાનો પ્રયાસ થશે.</div>
   <div id="ordersList">ઓર્ડર લોડ થઈ રહ્યા છે...</div>
 </section>
 <script type="module">
@@ -320,11 +320,10 @@ async function printPendingOrder(orderDoc) {
   }
 }
 
-$("startAutoPrintBtn").addEventListener("click", async () => {
+async function startAutoPrint() {
   if (autoPrintStarted) return;
-  $("printStatus").textContent = "Cleanter સાથે જોડાઈ રહ્યું છે...";
+  $("printStatus").textContent = "Cleanter સાથે આપમેળે જોડાઈ રહ્યું છે...";
   try {
-    // This first request is deliberately made from the button tap so Chrome can ask for local-device access.
     const healthResponse = await fetch("http://localhost:9100/health");
     if (!healthResponse.ok) throw new Error("Cleanter server મળ્યો નથી.");
     const health = await healthResponse.json();
@@ -342,15 +341,28 @@ $("startAutoPrintBtn").addEventListener("click", async () => {
       $("printStatus").textContent = "ઓર્ડર સાંભળવામાં ભૂલ: " + error.message;
     });
     $("printStatus").textContent = "ઓટો પ્રિન્ટ ચાલુ છે. આ Admin પેજ ખુલ્લું રાખો.";
+    $("startAutoPrintBtn").textContent = "ઓટો પ્રિન્ટ ચાલુ છે";
     $("startAutoPrintBtn").disabled = true;
   } catch (error) {
-    $("printStatus").textContent = "જોડાણ થયું નથી: " + (error.message || error) + ". Cleanter ખુલ્લું રાખો અને ફરી પ્રયાસ કરો.";
+    $("printStatus").textContent = "ઓટો પ્રિન્ટ આપમેળે શરૂ ન થયું: " + (error.message || error) + ". Cleanter ચાલુ રાખો; જરૂર પડે તો નીચેનું બટન દબાવો.";
+    $("startAutoPrintBtn").textContent = "ફરી પ્રયાસ કરો";
+    $("startAutoPrintBtn").disabled = false;
   }
-});
+}
+$("startAutoPrintBtn").addEventListener("click", startAutoPrint);
 
 onAuthStateChanged(auth, user => {
   ordersCard.classList.toggle("hidden", !user);
-  if (user) loadOrders();
+  if (user) {
+    loadOrders();
+    startAutoPrint();
+  } else {
+    if (stopPendingOrders) stopPendingOrders();
+    stopPendingOrders = null;
+    autoPrintStarted = false;
+    $("startAutoPrintBtn").disabled = false;
+    $("startAutoPrintBtn").textContent = "ઓટો પ્રિન્ટ આપમેળે શરૂ કરો";
+  }
 });
 </script>
 </body>
