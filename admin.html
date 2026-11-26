@@ -178,7 +178,7 @@ async function loadOrders() {
 
       const info = document.createElement("div");
       info.textContent =
-        "ઓર્ડર: " + order.id +
+        "ટોકન: #" + (d.tokenNumber ?? "જૂનો ઓર્ડર") +
         " | નામ: " + (d.customerName || "") +
         " | મોબાઇલ: " + (d.mobile || "") +
         " | કુલ: ₹" + (d.total || 0) +
@@ -200,6 +200,7 @@ async function loadOrders() {
 $("refreshOrdersBtn").addEventListener("click", loadOrders);
 
 let autoPrintStarted = false;
+let autoPrintStarting = false;
 let stopPendingOrders = null;
 const printingOrders = new Set();
 
@@ -238,7 +239,7 @@ async function receiptContent(orderId, data) {
   addText("THE CREATIVE CAFE",{align:"center",bold:true,gap:5});
   addText("સુકૂન का दूसरा नाम — कॉफी।",{align:"center",gap:4});
   addDivider();
-  addText("TOKEN: " + orderId.slice(0,8),{bold:true});
+  addText("TOKEN #" + (data.tokenNumber ?? "—"),{bold:true});
   addText("ગ્રાહકનું નામ: " + (data.customerName || ""));
   addText("મોબાઇલ: " + (data.mobile || ""));
   addDivider();
@@ -328,7 +329,8 @@ async function printPendingOrder(orderDoc) {
 }
 
 async function startAutoPrint() {
-  if (autoPrintStarted) return;
+  if (autoPrintStarted || autoPrintStarting) return;
+  autoPrintStarting = true;
   $("printStatus").textContent = "Cleanter સાથે આપમેળે જોડાઈ રહ્યું છે...";
   try {
     const healthResponse = await fetch("http://localhost:9100/health");
@@ -351,6 +353,7 @@ async function startAutoPrint() {
     $("startAutoPrintBtn").textContent = "ઓટો પ્રિન્ટ ચાલુ છે";
     $("startAutoPrintBtn").disabled = true;
   } catch (error) {
+    autoPrintStarting = false;
     $("printStatus").textContent = "ઓટો પ્રિન્ટ આપમેળે શરૂ ન થયું: " + (error.message || error) + ". Cleanter ચાલુ રાખો; જરૂર પડે તો નીચેનું બટન દબાવો.";
     $("startAutoPrintBtn").textContent = "ફરી પ્રયાસ કરો";
     $("startAutoPrintBtn").disabled = false;
@@ -367,6 +370,7 @@ onAuthStateChanged(auth, user => {
     if (stopPendingOrders) stopPendingOrders();
     stopPendingOrders = null;
     autoPrintStarted = false;
+    autoPrintStarting = false;
     $("startAutoPrintBtn").disabled = false;
     $("startAutoPrintBtn").textContent = "ઓટો પ્રિન્ટ આપમેળે શરૂ કરો";
   }
