@@ -25,14 +25,13 @@ label{display:block;margin:12px 0 6px;color:#e8d7b2}
 .total{font-size:22px;color:#f5d27a}
 .submit{width:100%;margin-top:15px;padding:14px}
 #message{color:#f5d27a;white-space:pre-wrap}
-
-/* Premium photo menu */
 :root{scroll-behavior:smooth;scroll-padding-top:112px}
 header{position:relative;background:radial-gradient(ellipse at 50% 12%,#241b0d 0%,#080808 68%);padding:22px 12px 20px;border-bottom:1px solid #8c682e}
 header h1{letter-spacing:2px;font-size:clamp(25px,6vw,36px)}
 .brand-mark{display:block;width:min(330px,84vw);height:min(330px,84vw);object-fit:contain;object-position:center;background:transparent;border-radius:50%;margin:0 auto 10px;opacity:1;filter:brightness(1.07) contrast(1.13);image-rendering:auto;border:0;box-shadow:none}
 header p{color:#d9c69c;margin-bottom:0}
-.brand-header .brand-topline{display:flex;justify-content:space-between;align-items:center;max-width:760px;margin:0 auto 8px;color:#c9a45d;font-size:10px;letter-spacing:2px;font-weight:bold}.brand-header h1{font-size:clamp(23px,6vw,34px);letter-spacing:2px;margin:5px 0}.brand-tagline{font-size:clamp(16px,4vw,20px);margin:6px 0 12px!important;color:#e5d2a5!important}.brand-bottomline{color:#a98a52;font-size:10px;letter-spacing:2px;margin-top:8px}.menu-title{text-align:center;margin:12px auto 8px}.menu-title span{display:inline-block;padding:8px 34px;border:1px solid #bd9142;border-radius:30px;color:#f5d27a;font-family:Georgia,serif;font-size:clamp(25px,7vw,36px);font-style:italic;letter-spacing:1px;box-shadow:0 0 12px rgba(189,145,66,.12)}\n#categoryNav{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow-x:auto;padding:11px 12px;background:rgba(8,8,8,.96);border-bottom:1px solid #806020;scrollbar-width:none}
+.brand-header .brand-topline{display:flex;justify-content:space-between;align-items:center;max-width:760px;margin:0 auto 8px;color:#c9a45d;font-size:10px;letter-spacing:2px;font-weight:bold}.brand-header h1{font-size:clamp(23px,6vw,34px);letter-spacing:2px;margin:5px 0}.brand-tagline{font-size:clamp(16px,4vw,20px);margin:6px 0 12px!important;color:#e5d2a5!important}.brand-bottomline{color:#a98a52;font-size:10px;letter-spacing:2px;margin-top:8px}.menu-title{text-align:center;margin:12px auto 8px}.menu-title span{display:inline-block;padding:8px 34px;border:1px solid #bd9142;border-radius:30px;color:#f5d27a;font-family:Georgia,serif;font-size:clamp(25px,7vw,36px);font-style:italic;letter-spacing:1px;box-shadow:0 0 12px rgba(189,145,66,.12)}
+#categoryNav{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow-x:auto;padding:11px 12px;background:rgba(8,8,8,.96);border-bottom:1px solid #806020;scrollbar-width:none}
 #categoryNav a{flex:0 0 auto;text-decoration:none;color:#f5d27a;border:1px solid #806020;border-radius:20px;padding:9px 13px;font-size:13px;font-weight:bold;white-space:nowrap}
 #categoryNav a:active,#categoryNav a:focus{background:#c9a45d;color:#111}
 main{padding:12px;max-width:820px}
@@ -51,7 +50,7 @@ main{padding:12px;max-width:820px}
 </head>
 <body>
 <header>
-<img class="brand-mark" src="/logo.webp" alt="The Creative Cafe Chocolate logo">
+<img class="brand-mark" src="/logo_clean.jpg" alt="The Creative Cafe Chocolate logo">
 <h1>THE CREATIVE CAFE</h1>
 <p>સુકૂન का दूसरा नाम — कॉफी।</p>
 </header>
@@ -60,287 +59,23 @@ main{padding:12px;max-width:820px}
 <section class="panel">
 <h2>તમારો ઓર્ડર</h2>
 <div id="cart">હજુ કોઈ વસ્તુ પસંદ કરી નથી.</div>
-<div class="line">
-<strong>કુલ બિલ</strong>
-<strong class="total" id="total">₹0</strong>
-</div>
-<label>ગ્રાહકનું નામ *</label>
-<input id="customerName" placeholder="તમારું નામ">
-<label>મોબાઇલ નંબર *</label>
-<input id="mobile" inputmode="numeric" maxlength="10" placeholder="10 અંકનો નંબર">
-<button class="submit" id="placeOrder">ઓર્ડર કન્ફર્મ કરો</button>
-<div id="message"></div>
+<div class="line"><strong>કુલ બિલ</strong><strong class="total" id="total">₹0</strong></div>
+<label>ગ્રાહકનું નામ *</label><input id="customerName" placeholder="તમારું નામ">
+<label>મોબાઇલ નંબર *</label><input id="mobile" inputmode="numeric" maxlength="10" placeholder="10 અંકનો નંબર">
+<button class="submit" id="placeOrder">ઓર્ડર કન્ફર્મ કરો</button><div id="message"></div>
 </section>
 </main>
-
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import {getFirestore,collection,onSnapshot,doc,runTransaction,serverTimestamp} from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
-
-const firebaseConfig = {
-apiKey:"AIzaSyAkCeioTxKKnFPVHUfRXcCQmH88SwyB9jE",
-authDomain:"the-creativit-cafe-manu.firebaseapp.com",
-projectId:"the-creativit-cafe-manu",
-storageBucket:"the-creativit-cafe-manu.firebasestorage.app",
-messagingSenderId:"806496134143",
-appId:"1:806496134143:web:750eaea05f4565d7bb3dca",
-measurementId:"G-M7H7506ZHE"
-};
-
-const app=initializeApp(firebaseConfig);
-const db=getFirestore(app);
-const menu=document.getElementById("menu");
-const categoryNav=document.getElementById("categoryNav");
-const cart=document.getElementById("cart");
-const quantities={};
-const products={};
-let busy=false;
-
-function hasSizes(p){
-return p.PriceSmall!==undefined &&
-p.PriceLarge!==undefined &&
-Number.isFinite(Number(p.PriceSmall)) &&
-Number.isFinite(Number(p.PriceLarge));
-}
-
-function itemPrice(p,size){
-return hasSizes(p)
-? Number(size==="Large"?p.PriceLarge:p.PriceSmall)
-: Number(p.Price);
-}
-
-function renderCart(){
-cart.innerHTML="";
-let total=0,count=0;
-
-Object.keys(quantities).forEach(key=>{
-const q=quantities[key];
-const parts=key.split("::");
-const id=parts[0];
-const size=parts[1]||"";
-
-if(q<=0 || !products[id])return;
-
-const p=products[id];
-const price=itemPrice(p,size);
-total+=price*q;
-count+=q;
-
-const row=document.createElement("div");
-row.className="line";
-row.textContent=(p.Name||"")+
-(size?" ("+size+")":"")+
-" × "+q+" = ₹"+(price*q);
-cart.append(row);
-});
-
-if(count===0)cart.textContent="હજુ કોઈ વસ્તુ પસંદ કરી નથી.";
-document.getElementById("total").textContent="₹"+total;
-return {total,count};
-}
-
-function changeQty(id,change,size){
-const key=id+"::"+(size||"");
-quantities[key]=Math.max(0,(quantities[key]||0)+change);
-renderCart();
-}
-
-onSnapshot(collection(db,"menuItems"),snapshot=>{
-menu.innerHTML="";
-Object.keys(products).forEach(k=>delete products[k]);
-
-const groups={};
-
-snapshot.docs.forEach(doc=>{
-const p={id:doc.id,...doc.data()};
-if(p.Available===false)return;
-
-products[p.id]=p;
-const cat=p.Category||"Menu";
-if(!groups[cat])groups[cat]=[];
-groups[cat].push(p);
-});
-
-categoryNav.replaceChildren();
-Object.keys(groups).forEach((category,index)=>{
-const anchor=document.createElement("a");
-anchor.href="#category-"+index;
-anchor.textContent=category;
-categoryNav.append(anchor);
-
-const section=document.createElement("section");
-section.className="menu-section";
-section.id="category-"+index;
-const hero=document.createElement("div");
-hero.className="category-hero";
-if(groups[category][0].CategoryImageURL){const heroImg=document.createElement("img");heroImg.src=groups[category][0].CategoryImageURL;heroImg.alt=category;hero.append(heroImg);}
-const heading=document.createElement("h2");
-heading.textContent=category;
-hero.append(heading);
-section.append(hero);
-
-groups[category].forEach(p=>{
-const row=document.createElement("div");
-row.className="item";
-const photo=document.createElement("img");
-photo.className="item-photo";
-photo.alt=p.Name||"Menu item";
-photo.loading="lazy";
-if(p.ImageURL){photo.src=p.ImageURL;}else{photo.style.display="none";row.style.gridTemplateColumns="minmax(0,1fr)";}
-
-const info=document.createElement("div");
-info.className="item-info";
-const name=document.createElement("strong");
-name.textContent=p.Name||"";
-const description=document.createElement("div");
-description.className="item-description";
-description.textContent=p.Description||"The Creative Cafe ની ખાસ પસંદગી.";
-
-const price=document.createElement("div");
-price.className="price";
-
-const controls=document.createElement("div");
-controls.className="controls";
-
-let sizeSelect=null;
-
-if(hasSizes(p)){
-price.textContent="Small ₹"+p.PriceSmall+" | Large ₹"+p.PriceLarge;
-sizeSelect=document.createElement("select");
-sizeSelect.innerHTML=
-'<option value="Small">Small</option><option value="Large">Large</option>';
-controls.append(sizeSelect);
-}else{
-price.textContent="₹"+p.Price;
-}
-
-info.append(name,description,price);
-
-const currentSize=()=>sizeSelect?sizeSelect.value:"";
-
-const minus=document.createElement("button");
-minus.textContent="−";
-
-const number=document.createElement("span");
-
-const updateNumber=()=>{
-const key=p.id+"::"+currentSize();
-number.textContent=quantities[key]||0;
-};
-
-minus.onclick=()=>{
-changeQty(p.id,-1,currentSize());
-updateNumber();
-};
-
-const plus=document.createElement("button");
-plus.textContent="+";
-plus.onclick=()=>{
-changeQty(p.id,1,currentSize());
-updateNumber();
-};
-
-if(sizeSelect)sizeSelect.onchange=updateNumber;
-
-updateNumber();
-controls.append(minus,number,plus);
-row.append(photo,info,controls);
-section.append(row);
-});
-
-menu.append(section);
-});
-
-renderCart();
-},error=>{
-menu.textContent="મેનૂ લોડ થયું નથી. Firebase Rules તપાસો.";
-console.error(error);
-});
-
-document.getElementById("placeOrder").onclick=async()=>{
-if(busy)return;
-
-const name=document.getElementById("customerName").value.trim();
-const phone=document.getElementById("mobile").value.replace(/\D/g,"");
-const {total,count}=renderCart();
-const message=document.getElementById("message");
-
-if(!count){message.textContent="પહેલા વસ્તુ પસંદ કરો.";return;}
-if(!name){message.textContent="નામ લખો.";return;}
-if(!/^\d{10}$/.test(phone)){
-message.textContent="યોગ્ય 10 અંકનો મોબાઇલ નંબર લખો.";
-return;
-}
-
-const items=Object.keys(quantities)
-.filter(key=>quantities[key]>0 && products[key.split("::")[0]])
-.map(key=>{
-const parts=key.split("::");
-const id=parts[0];
-const size=parts[1]||"";
-const p=products[id];
-const price=itemPrice(p,size);
-
-return {
-menuItemId:id,
-name:p.Name,
-category:p.Category||"",
-...(size?{size:size}:{}),
-price:price,
-quantity:quantities[key],
-lineTotal:price*quantities[key]
-};
-});
-
-busy=true;
-const btn=document.getElementById("placeOrder");
-btn.disabled=true;
-message.textContent="ઓર્ડર સાચવાઈ રહ્યો છે...";
-
-try{
-const ref=doc(collection(db,"orders"));
-const counterRef=doc(db,"settings","orderCounter");
-const tokenNumber=await runTransaction(db,async transaction=>{
-const counterSnap=await transaction.get(counterRef);
-const nextNumber=(counterSnap.exists()?Number(counterSnap.data().lastNumber)||0:0)+1;
-transaction.set(counterRef,{lastNumber:nextNumber},{merge:true});
-transaction.set(ref,{
-tokenNumber:nextNumber,
-customerName:name,
-mobile:phone,
-items:items,
-total:total,
-status:"New Order",
-printStatus:"Pending",
-createdAt:serverTimestamp()
-});
-return nextNumber;
-});
-
-const details=items.map(x=>
-x.name+(x.size?" ("+x.size+")":"")+
-" × "+x.quantity+" = ₹"+x.lineTotal
-).join("\n");
-
-const text=
-"THE CREATIVE CAFE ☕"+
-"\nટોકન #"+tokenNumber+
-"\nનામ: "+name+
-"\nમોબાઇલ: "+phone+
-"\n"+details+
-"\nકુલ બિલ: ₹"+total;
-
-window.location.href=
-"https://wa.me/917202927420?text="+encodeURIComponent(text);
-
-}catch(error){
-message.textContent="ઓર્ડર સાચવાયો નથી: "+error.message;
-console.error(error);
-}finally{
-busy=false;
-btn.disabled=false;
-}
-};
+const firebaseConfig={apiKey:"AIzaSyAkCeioTxKKnFPVHUfRXcCQmH88SwyB9jE",authDomain:"the-creativit-cafe-manu.firebaseapp.com",projectId:"the-creativit-cafe-manu",storageBucket:"the-creativit-cafe-manu.firebasestorage.app",messagingSenderId:"806496134143",appId:"1:806496134143:web:750eaea05f4565d7bb3dca",measurementId:"G-M7H7506ZHE"};
+const app=initializeApp(firebaseConfig),db=getFirestore(app),menu=document.getElementById("menu"),categoryNav=document.getElementById("categoryNav"),cart=document.getElementById("cart"),quantities={},products={};let busy=false;
+function hasSizes(p){return p.PriceSmall!==undefined&&p.PriceLarge!==undefined&&Number.isFinite(Number(p.PriceSmall))&&Number.isFinite(Number(p.PriceLarge))}
+function itemPrice(p,size){return hasSizes(p)?Number(size==="Large"?p.PriceLarge:p.PriceSmall):Number(p.Price)}
+function renderCart(){cart.innerHTML="";let total=0,count=0;Object.keys(quantities).forEach(key=>{const q=quantities[key],parts=key.split("::"),id=parts[0],size=parts[1]||"";if(q<=0||!products[id])return;const p=products[id],price=itemPrice(p,size);total+=price*q;count+=q;const row=document.createElement("div");row.className="line";row.textContent=(p.Name||"")+(size?" ("+size+")":"")+" × "+q+" = ₹"+(price*q);cart.append(row)});if(count===0)cart.textContent="હજુ કોઈ વસ્તુ પસંદ કરી નથી.";document.getElementById("total").textContent="₹"+total;return{total,count}}
+function changeQty(id,change,size){const key=id+"::"+(size||"");quantities[key]=Math.max(0,(quantities[key]||0)+change);renderCart()}
+onSnapshot(collection(db,"menuItems"),snapshot=>{menu.innerHTML="";Object.keys(products).forEach(k=>delete products[k]);const groups={};snapshot.docs.forEach(doc=>{const p={id:doc.id,...doc.data()};if(p.Available===false)return;products[p.id]=p;const cat=p.Category||"Menu";if(!groups[cat])groups[cat]=[];groups[cat].push(p)});categoryNav.replaceChildren();Object.keys(groups).forEach((category,index)=>{const anchor=document.createElement("a");anchor.href="#category-"+index;anchor.textContent=category;categoryNav.append(anchor);const section=document.createElement("section");section.className="menu-section";section.id="category-"+index;const hero=document.createElement("div");hero.className="category-hero";if(groups[category][0].CategoryImageURL){const heroImg=document.createElement("img");heroImg.src=groups[category][0].CategoryImageURL;heroImg.alt=category;hero.append(heroImg)}const heading=document.createElement("h2");heading.textContent=category;hero.append(heading);section.append(hero);groups[category].forEach(p=>{const row=document.createElement("div");row.className="item";const photo=document.createElement("img");photo.className="item-photo";photo.alt=p.Name||"Menu item";photo.loading="lazy";if(p.ImageURL){photo.src=p.ImageURL}else{photo.style.display="none";row.style.gridTemplateColumns="minmax(0,1fr)"}const info=document.createElement("div");info.className="item-info";const name=document.createElement("strong");name.textContent=p.Name||"";const description=document.createElement("div");description.className="item-description";description.textContent=p.Description||"The Creative Cafe ની ખાસ પસંદગી.";const price=document.createElement("div");price.className="price";const controls=document.createElement("div");controls.className="controls";let sizeSelect=null;if(hasSizes(p)){price.textContent="Small ₹"+p.PriceSmall+" | Large ₹"+p.PriceLarge;sizeSelect=document.createElement("select");sizeSelect.innerHTML='<option value="Small">Small</option><option value="Large">Large</option>';controls.append(sizeSelect)}else{price.textContent="₹"+p.Price}info.append(name,description,price);const currentSize=()=>sizeSelect?sizeSelect.value:"";const minus=document.createElement("button");minus.textContent="−";const number=document.createElement("span");const updateNumber=()=>{const key=p.id+"::"+currentSize();number.textContent=quantities[key]||0};minus.onclick=()=>{changeQty(p.id,-1,currentSize());updateNumber()};const plus=document.createElement("button");plus.textContent="+";plus.onclick=()=>{changeQty(p.id,1,currentSize());updateNumber()};if(sizeSelect)sizeSelect.onchange=updateNumber;updateNumber();controls.append(minus,number,plus);row.append(photo,info,controls);section.append(row)});menu.append(section)});renderCart()},error=>{menu.textContent="મેનૂ લોડ થયું નથી. Firebase Rules તપાસો.";console.error(error)});
+document.getElementById("placeOrder").onclick=async()=>{if(busy)return;const name=document.getElementById("customerName").value.trim(),phone=document.getElementById("mobile").value.replace(/\\D/g,""),{total,count}=renderCart(),message=document.getElementById("message");if(!count){message.textContent="પહેલા વસ્તુ પસંદ કરો.";return}if(!name){message.textContent="નામ લખો.";return}if(!/^\\d{10}$/.test(phone)){message.textContent="યોગ્ય 10 અંકનો મોબાઇલ નંબર લખો.";return}const items=Object.keys(quantities).filter(key=>quantities[key]>0&&products[key.split("::")[0]]).map(key=>{const parts=key.split("::"),id=parts[0],size=parts[1]||"",p=products[id],price=itemPrice(p,size);return{menuItemId:id,name:p.Name,category:p.Category||"",...(size?{size}:{}),price,quantity:quantities[key],lineTotal:price*quantities[key]}});busy=true;const btn=document.getElementById("placeOrder");btn.disabled=true;message.textContent="ઓર્ડર સાચવાઈ રહ્યો છે...";try{const ref=doc(collection(db,"orders")),counterRef=doc(db,"settings","orderCounter");const tokenNumber=await runTransaction(db,async transaction=>{const counterSnap=await transaction.get(counterRef),nextNumber=(counterSnap.exists()?Number(counterSnap.data().lastNumber)||0:0)+1;transaction.set(counterRef,{lastNumber:nextNumber},{merge:true});transaction.set(ref,{tokenNumber:nextNumber,customerName:name,mobile:phone,items,total,status:"New Order",printStatus:"Pending",createdAt:serverTimestamp()});return nextNumber});const details=items.map(x=>x.name+(x.size?" ("+x.size+")":"")+" × "+x.quantity+" = ₹"+x.lineTotal).join("\\n"),text="THE CREATIVE CAFE ☕"+"\\nટોકન #"+tokenNumber+"\\nનામ: "+name+"\\nમોબાઇલ: "+phone+"\\n"+details+"\\nકુલ બિલ: ₹"+total;window.location.href="https://wa.me/917202927420?text="+encodeURIComponent(text)}catch(error){message.textContent="ઓર્ડર સાચવાયો નથી: "+error.message;console.error(error)}finally{busy=false;btn.disabled=false}};
 </script>
 </body>
 </html>
