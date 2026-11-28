@@ -75,15 +75,15 @@ function itemPrice(p,size){return hasSizes(p)?Number(size==="Large"?p.PriceLarge
 function renderCart(){cart.innerHTML="";let total=0,count=0;Object.keys(quantities).forEach(key=>{const q=quantities[key],parts=key.split("::"),id=parts[0],size=parts[1]||"";if(q<=0||!products[id])return;const p=products[id],price=itemPrice(p,size);total+=price*q;count+=q;const row=document.createElement("div");row.className="line";row.textContent=(p.Name||"")+(size?" ("+size+")":"")+" × "+q+" = ₹"+(price*q);cart.append(row)});if(count===0)cart.textContent="હજુ કોઈ વસ્તુ પસંદ કરી નથી.";document.getElementById("total").textContent="₹"+total;return{total,count}}
 function changeQty(id,change,size){const key=id+"::"+(size||"");quantities[key]=Math.max(0,(quantities[key]||0)+change);renderCart()}
 onSnapshot(collection(db,"menuItems"),snapshot=>{menu.innerHTML="";Object.keys(products).forEach(k=>delete products[k]);const groups={};snapshot.docs.forEach(doc=>{const p={id:doc.id,...doc.data()};if(p.Available===false)return;products[p.id]=p;const cat=p.Category||"Menu";if(!groups[cat])groups[cat]=[];groups[cat].push(p)});categoryNav.replaceChildren();Object.keys(groups).forEach((category,index)=>{const anchor=document.createElement("a");anchor.href="#category-"+index;anchor.textContent=category;categoryNav.append(anchor);const section=document.createElement("section");section.className="menu-section";section.id="category-"+index;const hero=document.createElement("div");hero.className="category-hero";const categoryPhotoDefaults=[
-{match:/hot\\s*coffee/i,url:"https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1200&q=80"},
-{match:/iced\\s*coffee/i,url:"https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1200&q=80"},
-{match:/cold\\s*coffee/i,url:"https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=1200&q=80"},
-{match:/instant\\s*coffee/i,url:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80"},
+{match:/hot\s*coffee/i,url:"https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=1200&q=80"},
+{match:/iced\s*coffee/i,url:"https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=1200&q=80"},
+{match:/cold\s*coffee/i,url:"https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=1200&q=80"},
+{match:/instant\s*coffee/i,url:"https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1200&q=80"},
 {match:/affogato/i,url:"https://images.unsplash.com/photo-1563805042-7684c019e1cb?auto=format&fit=crop&w=1200&q=80"},
 {match:/milkshake/i,url:"https://images.unsplash.com/photo-1572490122747-3968b75cc699?auto=format&fit=crop&w=1200&q=80"},
-{match:/hot\\s*chocolate/i,url:"https://images.unsplash.com/photo-1542990253-0b8be2a7e5c4?auto=format&fit=crop&w=1200&q=80"},
+{match:/hot\s*chocolate/i,url:"https://images.unsplash.com/photo-1542990253-0b8be2a7e5c4?auto=format&fit=crop&w=1200&q=80"},
 {match:/brownie/i,url:"https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=1200&q=80"},
-{match:/mojito/i,url:"https://images.unsplash.com/photo-1513558161293-cно?auto=format&fit=crop&w=1200&q=80"},
+{match:/mojito/i,url:"https://images.unsplash.com/photo-1551538827-9c037cb4f32a?auto=format&fit=crop&w=1200&q=80"},
 {match:/croissant/i,url:"https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1200&q=80"},
 {match:/matcha/i,url:"https://images.unsplash.com/photo-1515823064-d6e0c04616a7?auto=format&fit=crop&w=1200&q=80"}
 ];
