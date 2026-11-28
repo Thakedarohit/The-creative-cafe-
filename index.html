@@ -97,13 +97,23 @@ onSnapshot(collection(db,"menuItems"),snapshot=>{
     section.id="category-"+index;
     const hero=document.createElement("div");
     hero.className="category-hero";
-    const photos=groups[category].map(p=>p.CategoryImageURL||p.ImageURL).filter(Boolean);
-    const defaults=[
-      "photo-1442512595331-e89e73853f31",
-      "photo-1509042239860-f550ce710b93",
-      "photo-1495474472287-4d71bcdd2085",
-      "photo-1514432324607-a09d9b4aefdd"
-    ].map(id=>"https://images.unsplash.com/"+id+"?auto=format&fit=crop&w=600&q=80");
+    const categoryPhotoSets=[
+      {test:/hot\\s*coffee/i,ids:["photo-1442512595331-e89e73853f31","photo-1509042239860-f550ce710b93","photo-1495474472287-4d71bcdd2085","photo-1514432324607-a09d9b4aefdd"]},
+      {test:/iced\\s*coffee/i,ids:["photo-1517701604599-bb29b565090c","photo-1461023058943-07fcbe16d735","photo-1541167760496-1628856ab772","photo-1517701550927-30cf4ba1dba5"]},
+      {test:/cold\\s*coffee/i,ids:["photo-1461023058943-07fcbe16d735","photo-1517701604599-bb29b565090c","photo-1541167760496-1628856ab772","photo-1517701550927-30cf4ba1dba5"]},
+      {test:/instant\\s*coffee/i,ids:["photo-1495474472287-4d71bcdd2085","photo-1442512595331-e89e73853f31","photo-1509042239860-f550ce710b93","photo-1514432324607-a09d9b4aefdd"]},
+      {test:/affogato/i,ids:["photo-1511920170033-f8396924c348","photo-1509042239860-f550ce710b93","photo-1495474472287-4d71bcdd2085","photo-1514432324607-a09d9b4aefdd"]},
+      {test:/milkshake/i,ids:["photo-1572490122747-3968b75cc699","photo-1577805947697-89e18249d767","photo-1579954115545-a95591f28bfc","photo-1541658016709-82535e94bc69"]},
+      {test:/hot\\s*chocolate/i,ids:["photo-1542990253-0b8be2a7e5c4","photo-1517578239113-b03992dcdd25","photo-1514432324607-a09d9b4aefdd","photo-1541167760496-1628856ab772"]},
+      {test:/brownie|dessert/i,ids:["photo-1606313564200-e75d5e30476c","photo-1564355808539-22fda35bed7e","photo-1607920592519-3a9f4e1b8f9b","photo-1541781774459-bb2af2f05b55"]},
+      {test:/mojito|mocktail/i,ids:["photo-1544145945-f90425340c7e","photo-1546173159-315724a31696","photo-1551538827-9c037cb4f32a","photo-1517701604599-bb29b565090c"]},
+      {test:/croissant|bakery/i,ids:["photo-1555507036-ab1f4038808a","photo-1530610476181-d83430b64dcd","photo-1509440159596-0249088772ff","photo-1529973625058-a665431328fb"]},
+      {test:/matcha/i,ids:["photo-1515823064-d6e0c04616a7","photo-1544787219-7f47abba0a72","photo-1517701604599-bb29b565090c","photo-1517701550927-30cf4ba1dba5"]}
+    ];
+    const matchedSet=categoryPhotoSets.find(set=>set.test.test(category));
+    const categoryDefaults=(matchedSet||categoryPhotoSets[0]).ids.map(id=>"https://images.unsplash.com/"+id+"?auto=format&fit=crop&w=600&q=80");
+    const customPhoto=groups[category].find(p=>p.CategoryImageURL)?.CategoryImageURL;
+    const uniquePhotos=[...new Set([customPhoto,...categoryDefaults].filter(Boolean))].slice(0,4);
     const gallery=document.createElement("div");
     gallery.className="hero-gallery";
     const uniquePhotos=[...new Set([...photos,...defaults])].slice(0,4);
